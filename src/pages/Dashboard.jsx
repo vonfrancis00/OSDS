@@ -65,6 +65,7 @@ const Dashboard = () => {
           value="320"
           icon={<FileText size={24} />}
           color="bg-purple-500"
+          to="/msrs"
         />
 
         <StatCard
@@ -72,6 +73,7 @@ const Dashboard = () => {
           value="210"
           icon={<CheckCircle size={24} />}
           color="bg-green-500"
+          to="/sikap"
         />
 
         <StatCard
@@ -79,6 +81,7 @@ const Dashboard = () => {
           value="110"
           icon={<Clock size={24} />}
           color="bg-yellow-500"
+          to="/husay"
         />
 
       </div>

@@ -1,10 +1,18 @@
-import { Home, Users, BarChart3, Menu, X } from "lucide-react";
+import { Home, Users, BarChart3, Menu, X, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useState } from "react";
 
 const Sidebar = () => {
   const location = useLocation();
   const [open, setOpen] = useState(false);
+
+  // 🔐 LOGOUT FUNCTION
+  const handleLogout = () => {
+    if (confirm("Are you sure you want to logout?")) {
+      localStorage.removeItem("token");
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <>
@@ -39,10 +47,10 @@ const Sidebar = () => {
         <nav className="mt-6">
 
           <SidebarItem
-            to="/"
+            to="/dashboard"
             icon={<Home size={22} />}
             text="Dashboard"
-            active={location.pathname === "/"}
+            active={location.pathname === "/dashboard"}
           />
 
           {/* Scholars with Submenu */}
@@ -58,21 +66,21 @@ const Sidebar = () => {
             />
 
             <SubItem
-              to="/scholars/msrs"
+              to="/msrs"
               text="MSRS"
-              active={location.pathname === "/scholars/msrs"}
+              active={location.pathname === "/msrs"}
             />
 
             <SubItem
-              to="/scholars/sikap"
+              to="/sikap"
               text="SIKAP"
-              active={location.pathname === "/scholars/sikap"}
+              active={location.pathname === "/sikap"}
             />
 
             <SubItem
-              to="/scholars/husay"
+              to="/husay"
               text="HUSAY"
-              active={location.pathname === "/scholars/husay"}
+              active={location.pathname === "/husay"}
             />
           </SidebarDropdown>
 
@@ -84,11 +92,30 @@ const Sidebar = () => {
           />
 
         </nav>
+
+        {/* 🔥 LOGOUT BUTTON */}
+        <div className="absolute bottom-0 w-full">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-4 p-4 hover:bg-red-600 transition text-left"
+          >
+            <div className="w-10 flex justify-center">
+              <LogOut size={22} />
+            </div>
+
+            <span className="font-bold opacity-100 md:opacity-0 md:group-hover:opacity-100 transition whitespace-nowrap">
+              Logout
+            </span>
+          </button>
+        </div>
+
       </div>
     </>
   );
 };
 
+
+// ================= COMPONENTS =================
 
 const SidebarItem = ({ icon, text, to, active }) => {
   return (
@@ -125,9 +152,7 @@ const SidebarDropdown = ({ icon, text, children, active }) => {
 
       {/* Sub Menu */}
       <div className="hidden group-hover/item:block bg-blue-900">
-
         {children}
-
       </div>
     </div>
   );
