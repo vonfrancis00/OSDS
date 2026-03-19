@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
+  const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(true);
 
   const [email, setEmail] = useState("");
@@ -53,7 +56,9 @@ const Auth = () => {
       if (isLogin) {
         if (data.token) {
           localStorage.setItem("token", data.token);
-          window.location.href = "/dashboard";
+
+          // ✅ FIXED (no reload, proper navigation)
+          navigate("/dashboard");
         } else {
           setError(data.message || "Login failed");
         }
@@ -93,13 +98,10 @@ const Auth = () => {
       <div className="hidden md:flex w-1/2 bg-blue-900 text-white items-center justify-center p-10">
         <div className="max-w-md text-center">
 
-          <div className="flex justify-center items-center gap-6 mb-8 
-                          bg-white/50 backdrop-blur-md rounded-xl px-6 py-4">
-
+          <div className="flex justify-center items-center gap-6 mb-8 bg-white/50 backdrop-blur-md rounded-xl px-6 py-4">
             <img src="/Bagong_Pilipinas.png" className="w-30 h-30 object-contain" />
             <img src="/ched.png" className="w-30 h-30 object-contain" />
             <img src="/achieve.png" className="w-30 h-30 object-contain" />
-
           </div>
 
           <h1 className="text-4xl font-extrabold mb-4 uppercase tracking-wide">
@@ -114,36 +116,29 @@ const Auth = () => {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex w-full md:w-1/2 items-center justify-center 
-                      bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
 
-        <div className="bg-white/90 backdrop-blur-xl w-full max-w-md p-8 
-                        rounded-3xl shadow-2xl border border-gray-200">
+        <div className="bg-white/90 backdrop-blur-xl w-full max-w-md p-8 rounded-3xl shadow-2xl border border-gray-200">
 
-          {/* HEADER */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-extrabold text-gray-800">
               {isLogin ? "Welcome Back" : "Create Account"}
             </h2>
-
             <p className="text-gray-500 text-sm mt-2">
               {isLogin ? "Sign in to access your dashboard" : "Register to get started"}
             </p>
           </div>
 
-          {/* FORM */}
           <div className="flex flex-col gap-5">
 
-            {/* EMAIL */}
             <input
               type="email"
-              placeholder="Email Address"
+              placeholder="@ched.gov.ph"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
             />
 
-            {/* PASSWORD */}
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -160,26 +155,16 @@ const Auth = () => {
               </span>
             </div>
 
-            {/* CONFIRM PASSWORD */}
             {!isLogin && (
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 pr-10"
-                />
-                <span
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </span>
-              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
+              />
             )}
 
-            {/* BUTTON */}
             <button
               onClick={handleSubmit}
               disabled={loading}
@@ -188,14 +173,10 @@ const Auth = () => {
               {loading ? "Please wait..." : isLogin ? "Sign In" : "Register"}
             </button>
 
-            {/* MESSAGE */}
             {error && (
-              <p className="text-red-500 text-sm text-center">
-                {error}
-              </p>
+              <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
-            {/* SWITCH */}
             <p className="text-sm text-center text-gray-500">
               {isLogin ? "Don’t have an account?" : "Already have an account?"}{" "}
               <span
@@ -208,7 +189,6 @@ const Auth = () => {
 
           </div>
 
-          {/* FOOTER */}
           <p className="text-center text-xs text-gray-400 mt-6">
             © 2026 Scholarship System - OCDRA III
           </p>

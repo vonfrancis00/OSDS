@@ -38,15 +38,31 @@ startServer();
 // 🔐 AUTH ROUTES
 // =============================
 
-// REGISTER
+// 🔐 REGISTER (SUPERADMIN ONLY)
 app.post("/register", async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
+
+    // 🔐 TOKEN CHECK
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // 🔒 ONLY SUPERADMIN
+    if (decoded.role !== "superadmin") {
+      return res.status(403).json({
+        message: "Only super admin can add users",
+      });
+    }
 
     // 🔐 CHECK DOMAIN
     if (!email.endsWith("@ched.gov.ph")) {
       return res.status(400).json({
-        message: "Only CHED emails are allowed. Please Contact Admin for access.",
+        message: "Only CHED emails are allowed.",
       });
     }
 
@@ -59,20 +75,20 @@ app.post("/register", async (req, res) => {
     // 🔒 HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🎯 CREATE USER
+    // 🎯 CREATE USER WITH ROLE
     const newUser = {
       email,
       password: hashedPassword,
-      role: "admin", // 🔥 default role
+      role: role || "user", // ✅ dynamic role
       createdAt: new Date(),
     };
 
     await db.collection("users").insertOne(newUser);
 
-    res.json({ message: "User registered successfully" });
+    res.json({ message: "User created successfully" });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: "Invalid or expired token" });
   }
 });
 
@@ -94,8 +110,9 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
+    // ✅ INCLUDE ROLE HERE
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -107,6 +124,41 @@ app.post("/login", async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+// =============================
+// 👤 GET LOGGED-IN USER
+// =============================
+app.get("/user", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    // 🔐 VERIFY TOKEN
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // 🔍 FIND USER IN DB
+    const user = await db.collection("users").findOne({
+      _id: new ObjectId(decoded.id),
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // ❗ REMOVE PASSWORD BEFORE SENDING
+    delete user.password;
+
+    res.json(user);
+
+  } catch (err) {
+    console.error(err);
+    res.status(401).json({ message: "Invalid or expired token" });
   }
 });
 
@@ -148,4 +200,84 @@ app.delete("/scholars/:id", async (req, res) => {
   });
 
   res.json(result);
+});
+// =============================
+// 👑 USER MANAGEMENT (SUPER ADMIN ONLY)
+// =============================
+
+// 🔹 GET ALL USERS
+app.get("/users", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const currentUser = await db.collection("users").findOne({
+      _id: new ObjectId(decoded.id),
+    });
+
+    // 🔒 ONLY SUPERADMIN
+    if (currentUser.role !== "superadmin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const users = await db.collection("users").find().toArray();
+
+    // ❗ REMOVE PASSWORDS
+    const safeUsers = users.map((u) => {
+      delete u.password;
+      return u;
+    });
+
+    res.json(safeUsers);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+
+// 🔹 UPDATE USER ROLE
+app.put("/users/:id/role", async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    const currentUser = await db.collection("users").findOne({
+      _id: new ObjectId(decoded.id),
+    });
+
+    // 🔒 ONLY SUPERADMIN
+    if (currentUser.role !== "superadmin") {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // ⚠️ prevent self-role change (recommended)
+    if (decoded.id === req.params.id) {
+      return res.status(400).json({ message: "Cannot change your own role" });
+    }
+
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(req.params.id) },
+      { $set: { role } }
+    );
+
+    res.json({ message: "Role updated successfully" });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 });

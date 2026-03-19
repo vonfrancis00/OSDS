@@ -1,10 +1,31 @@
+import { useEffect, useState } from "react"; // ✅ added
 import Sidebar from "../components/Sidebar";
 
 const MainLayout = ({ children }) => {
+  const [user, setUser] = useState(null); // ✅ added
+
+  useEffect(() => { // ✅ added
+    const fetchUser = async () => {
+      const res = await fetch("http://localhost:5000/user", {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+
+      const data = await res.json();
+      setUser(data);
+    };
+
+    fetchUser();
+  }, []);
+
+  if (!user) return null; // ✅ added
+
   return (
     <div>
 
-      <Sidebar />
+      {/* ✅ added user prop */}
+      <Sidebar user={user} />
 
       {/* Dashboard Content */}
       <main className="ml-24 p-6">
