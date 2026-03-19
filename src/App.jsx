@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useEffect, useState } from "react"; // ✅ added
+import { useEffect, useState } from "react";
 
 import Dashboard from "./pages/Dashboard";
 import Scholars from "./pages/Scholars";
@@ -10,16 +10,20 @@ import SIKAP from "./pages/SIKAP";
 import HUSAY from "./pages/HUSAY";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
-import UserManagement from "./pages/UserManagement"; // ✅ added
+import UserManagement from "./pages/UserManagement";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { isAuthenticated } from "./utils/auth";
 
 function App() {
-  const [user, setUser] = useState(null); // ✅ added
+  const [user, setUser] = useState(() => {
+    // ✅ LOAD FROM LOCALSTORAGE FIRST (IMPORTANT FIX)
+    const storedUser = localStorage.getItem("user");
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
-  useEffect(() => { // ✅ added
+  useEffect(() => {
     if (isAuthenticated()) {
       fetch("http://localhost:5000/user", {
         headers: {
@@ -27,7 +31,16 @@ function App() {
         },
       })
         .then(res => res.json())
-        .then(setUser);
+        .then(data => {
+          setUser(data);
+          localStorage.setItem("user", JSON.stringify(data)); // ✅ KEEP SYNCED
+        })
+        .catch(() => {
+          // ❌ token invalid → logout
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          setUser(null);
+        });
     }
   }, []);
 
@@ -35,68 +48,124 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        <Route path="/" element={
-          <Navigate to={isAuthenticated() ? "/dashboard" : "/login"} replace />
-        } />
+        {/* ROOT */}
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={isAuthenticated() ? "/dashboard" : "/login"}
+              replace
+            />
+          }
+        />
 
-        <Route path="/login" element={
-          <PublicRoute><Auth /></PublicRoute>
-        } />
+        {/* LOGIN */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Auth />
+            </PublicRoute>
+          }
+        />
 
-        <Route path="/dashboard" element={
-          <ProtectedRoute user={user}><Dashboard /></ProtectedRoute>
-        } />
+        {/* DASHBOARD */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute user={user}>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/scholars" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <Scholars />
-          </ProtectedRoute>
-        } />
+        {/* SCHOLARS */}
+        <Route
+          path="/scholars"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <Scholars />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/scholars/:id" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <ScholarDetails />
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/scholars/:id"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <ScholarDetails />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/reports" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <Reports />
-          </ProtectedRoute>
-        } />
+        {/* REPORTS */}
+        <Route
+          path="/reports"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <Reports />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/msrs" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <MSRS />
-          </ProtectedRoute>
-        } />
+        {/* PROGRAMS */}
+        <Route
+          path="/msrs"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <MSRS />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/sikap" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <SIKAP />
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/sikap"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <SIKAP />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/husay" element={
-          <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-            <HUSAY />
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/husay"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
+              <HUSAY />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* 👑 superadmin only */}
-        <Route path="/users" element={
-          <ProtectedRoute user={user} allowedRoles={["superadmin"]}>
-            <UserManagement />
-          </ProtectedRoute>
-        } />
+        {/* 👑 SUPERADMIN ONLY */}
+        <Route
+          path="/users"
+          element={
+            <ProtectedRoute user={user} allowedRoles={["superadmin"]}>
+              <UserManagement />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/settings" element={
-          <ProtectedRoute user={user}><Settings /></ProtectedRoute>
-        } />
+        {/* SETTINGS */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute user={user}>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="*" element={
-          <Navigate to={isAuthenticated() ? "/dashboard" : "/login"} replace />
-        } />
+        {/* FALLBACK */}
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to={isAuthenticated() ? "/dashboard" : "/login"}
+              replace
+            />
+          }
+        />
 
       </Routes>
     </BrowserRouter>

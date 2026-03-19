@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../layout/MainLayout";
 import { Shield, Crown, User } from "lucide-react";
+import AddUserModal from "../components/AddUserModal";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     const res = await fetch("http://localhost:5000/users", {
@@ -66,7 +68,10 @@ const UserManagement = () => {
           </div>
 
           {/* OPTIONAL ACTION BUTTON */}
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm text-sm">
+          <button
+            onClick={() => setIsAddUserModalOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm text-sm"
+          >
             + Add User
           </button>
         </div>
@@ -141,6 +146,11 @@ const UserManagement = () => {
           )}
         </div>
       </div>
+      <AddUserModal
+        isOpen={isAddUserModalOpen}
+        onClose={() => setIsAddUserModalOpen(false)}
+        onUserAdded={fetchUsers}
+    />
     </MainLayout>
   );
 };

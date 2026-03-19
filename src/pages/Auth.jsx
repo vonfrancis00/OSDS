@@ -5,11 +5,9 @@ import { Eye, EyeOff } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
 
-  const [isLogin, setIsLogin] = useState(true);
-
+  // 🔥 LOGIN ONLY (no public register)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -19,31 +17,16 @@ const Auth = () => {
   const handleSubmit = async () => {
     setError("");
 
-    if (!email || !password || (!isLogin && !confirmPassword)) {
+    if (!email || !password) {
       setError("Please fill in all fields");
       return;
-    }
-
-    if (!isLogin) {
-      if (!email.endsWith("@ched.gov.ph")) {
-        setError("Only CHED emails are allowed. Please Contact Admin for access.");
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
     }
 
     try {
       setLoading(true);
 
-      const url = isLogin
-        ? "http://localhost:5000/login"
-        : "http://localhost:5000/register";
-
-      const res = await fetch(url, {
+      // 🔐 LOGIN REQUEST
+      const res = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,42 +36,39 @@ const Auth = () => {
 
       const data = await res.json();
 
-      if (isLogin) {
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-
-          // ✅ FIXED (no reload, proper navigation)
-          navigate("/dashboard");
-        } else {
-          setError(data.message || "Login failed");
-        }
-      } else {
-        if (res.ok) {
-          setError("Account created successfully! Please login.");
-          setIsLogin(true);
-
-          setEmail("");
-          setPassword("");
-          setConfirmPassword("");
-        } else {
-          setError(data.message || "Registration failed");
-        }
+      if (!res.ok || !data.token) {
+        setError(data.message || "Login failed");
+        return;
       }
+
+      // ✅ SAVE TOKEN
+      localStorage.setItem("token", data.token);
+
+      // 🔥 FETCH USER (WITH ROLE)
+      const userRes = await fetch("http://localhost:5000/user", {
+        headers: {
+          Authorization: "Bearer " + data.token,
+        },
+      });
+
+      const userData = await userRes.json();
+
+      if (!userRes.ok) {
+        setError("Failed to fetch user data");
+        return;
+      }
+
+      // ✅ SAVE USER (VERY IMPORTANT)
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      // 🚀 GO TO DASHBOARD
+      navigate("/dashboard");
+
     } catch (err) {
       setError("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSwitch = () => {
-    setIsLogin(!isLogin);
-
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setError("");
-    setShowPassword(false);
   };
 
   return (
@@ -120,17 +100,19 @@ const Auth = () => {
 
         <div className="bg-white/90 backdrop-blur-xl w-full max-w-md p-8 rounded-3xl shadow-2xl border border-gray-200">
 
+          {/* HEADER */}
           <div className="text-center mb-8">
             <h2 className="text-3xl font-extrabold text-gray-800">
-              {isLogin ? "Welcome Back" : "Create Account"}
+              Welcome Back
             </h2>
             <p className="text-gray-500 text-sm mt-2">
-              {isLogin ? "Sign in to access your dashboard" : "Register to get started"}
+              Sign in to access your dashboard
             </p>
           </div>
 
           <div className="flex flex-col gap-5">
 
+            {/* EMAIL */}
             <input
               type="email"
               placeholder="@ched.gov.ph"
@@ -139,6 +121,7 @@ const Auth = () => {
               className="px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
             />
 
+            {/* PASSWORD */}
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
@@ -155,37 +138,19 @@ const Auth = () => {
               </span>
             </div>
 
-            {!isLogin && (
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
-              />
-            )}
-
+            {/* BUTTON */}
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl"
+              className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition"
             >
-              {loading ? "Please wait..." : isLogin ? "Sign In" : "Register"}
+              {loading ? "Signing in..." : "Sign In"}
             </button>
 
+            {/* ERROR */}
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
-
-            <p className="text-sm text-center text-gray-500">
-              {isLogin ? "Don’t have an account?" : "Already have an account?"}{" "}
-              <span
-                onClick={handleSwitch}
-                className="text-blue-600 cursor-pointer font-medium"
-              >
-                {isLogin ? "Create one" : "Login"}
-              </span>
-            </p>
 
           </div>
 
