@@ -8,12 +8,12 @@ const jwt = require("jsonwebtoken");
 const app = express();
 
 // =============================
-// 🌐 CORS CONFIG (IMPORTANT)
+// 🌐 CORS (UPDATED)
 // =============================
 app.use(cors({
   origin: [
-    "http://localhost:5173", // local dev
-    "https://your-app.vercel.app" // 🔥 CHANGE THIS after deploy
+    "http://localhost:5173",
+    "https://your-app.vercel.app" // 🔥 REPLACE WITH REAL VERCEL URL
   ],
   credentials: true
 }));
@@ -21,7 +21,7 @@ app.use(cors({
 app.use(express.json());
 
 // =============================
-// 🔌 MONGODB CONNECTION
+// 🔌 MONGODB
 // =============================
 const client = new MongoClient(process.env.MONGO_URI);
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
@@ -29,7 +29,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 let db;
 
 // =============================
-// 🔐 HELPER: VERIFY TOKEN
+// 🔐 VERIFY TOKEN
 // =============================
 const verifyToken = (req, res) => {
   try {
@@ -44,17 +44,12 @@ const verifyToken = (req, res) => {
     return jwt.verify(token, JWT_SECRET);
 
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      res.status(401).json({ message: "Token expired" });
-    } else {
-      res.status(401).json({ message: "Invalid token" });
-    }
-    return null;
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
 
 // =============================
-// 🩺 HEALTH CHECK (FOR RENDER)
+// 🩺 HEALTH CHECK
 // =============================
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -176,7 +171,6 @@ app.post("/login", async (req, res) => {
     );
 
     res.json({
-      message: "Login successful",
       token,
     });
 
@@ -186,7 +180,7 @@ app.post("/login", async (req, res) => {
 });
 
 // =============================
-// 👤 GET CURRENT USER
+// 👤 GET USER
 // =============================
 app.get("/user", async (req, res) => {
   const decoded = verifyToken(req, res);
@@ -269,14 +263,6 @@ app.put("/users/:id/role", async (req, res) => {
   const decoded = verifyToken(req, res);
   if (!decoded) return;
 
-  const currentUser = await db.collection("users").findOne({
-    _id: new ObjectId(decoded.id),
-  });
-
-  if (currentUser.role !== "superadmin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
-
   if (decoded.id === req.params.id) {
     return res.status(400).json({ message: "Cannot change your own role" });
   }
@@ -293,14 +279,6 @@ app.put("/users/:id/role", async (req, res) => {
 app.put("/users/:id/status", async (req, res) => {
   const decoded = verifyToken(req, res);
   if (!decoded) return;
-
-  const currentUser = await db.collection("users").findOne({
-    _id: new ObjectId(decoded.id),
-  });
-
-  if (currentUser.role !== "superadmin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
 
   if (decoded.id === req.params.id) {
     return res.status(400).json({
@@ -320,14 +298,6 @@ app.put("/users/:id/status", async (req, res) => {
 app.delete("/users/:id", async (req, res) => {
   const decoded = verifyToken(req, res);
   if (!decoded) return;
-
-  const currentUser = await db.collection("users").findOne({
-    _id: new ObjectId(decoded.id),
-  });
-
-  if (currentUser.role !== "superadmin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
 
   if (decoded.id === req.params.id) {
     return res.status(400).json({

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import MainLayout from "../layout/MainLayout";
+import API_URL from "../utils/api"; // ✅ ADD THIS
 
 const Settings = () => {
   const [user, setUser] = useState(null);
 
   const fetchUser = async () => {
     try {
-      const res = await fetch("http://localhost:5000/user", {
+      const res = await fetch(`${API_URL}/user`, { // ✅ FIXED
         headers: {
           Authorization: "Bearer " + localStorage.getItem("token"),
         },
@@ -37,7 +38,6 @@ const Settings = () => {
     <MainLayout>
       <div className="p-8 bg-gray-50 min-h-screen">
 
-        {/* HEADER */}
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
           <p className="text-gray-500 mt-1">
@@ -45,13 +45,10 @@ const Settings = () => {
           </p>
         </div>
 
-        {/* MAIN GRID */}
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-          {/* LEFT - PROFILE CARD */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-            {/* AVATAR + NAME */}
             <div className="flex flex-col items-center text-center">
               <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
                 {initials || "U"}
@@ -63,16 +60,13 @@ const Settings = () => {
 
               <p className="text-sm text-gray-500">{user?.email}</p>
 
-              {/* ROLE BADGE */}
               <span className="mt-3 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-600">
                 {user?.role?.toUpperCase()}
               </span>
             </div>
 
-            {/* DIVIDER */}
             <div className="my-6 border-t" />
 
-            {/* DETAILS */}
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span className="text-gray-500">First Name</span>
@@ -104,10 +98,8 @@ const Settings = () => {
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
           <div className="xl:col-span-2 space-y-6">
 
-            {/* ACCOUNT INFO */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-6">
                 Account Information
@@ -148,7 +140,6 @@ const Settings = () => {
               </div>
             </div>
 
-            {/* SECURITY */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-800">

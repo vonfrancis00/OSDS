@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, UserPlus } from "lucide-react";
+import API_URL from "../utils/api"; // ✅ ADD THIS
 
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   const [form, setForm] = useState({
@@ -30,7 +31,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/register", {
+      const res = await fetch(`${API_URL}/register`, { // ✅ FIXED
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -65,7 +66,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100">
 
-        {/* HEADER */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <UserPlus className="text-blue-600" size={22} />
@@ -82,17 +82,14 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
           </button>
         </div>
 
-        {/* ERROR */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
-        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          {/* NAME ROW */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm text-gray-600">First Name</label>
@@ -119,7 +116,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             </div>
           </div>
 
-          {/* MIDDLE + SUFFIX */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-sm text-gray-600">Middle Initial</label>
@@ -149,7 +145,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             </div>
           </div>
 
-          {/* EMAIL */}
           <div>
             <label className="text-sm text-gray-600">Email</label>
             <input
@@ -163,7 +158,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             />
           </div>
 
-          {/* PASSWORD */}
           <div>
             <label className="text-sm text-gray-600">Password</label>
             <input
@@ -177,7 +171,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             />
           </div>
 
-          {/* ROLE */}
           <div>
             <label className="text-sm text-gray-600">Role</label>
             <select
@@ -192,7 +185,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             </select>
           </div>
 
-          {/* BUTTON */}
           <button
             type="submit"
             disabled={loading}

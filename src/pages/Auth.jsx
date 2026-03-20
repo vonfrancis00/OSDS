@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
+import API_URL from "../utils/api"; // ✅ ADD THIS
 
 const Auth = () => {
   const navigate = useNavigate();
 
-  // 🔥 EMAIL WITH FIXED DOMAIN
   const [email, setEmail] = useState("@ched.gov.ph");
   const [password, setPassword] = useState("");
 
@@ -14,7 +14,6 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ HANDLE SUBMIT (WITH ENTER SUPPORT)
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
@@ -28,7 +27,8 @@ const Auth = () => {
     try {
       setLoading(true);
 
-      const res = await fetch("http://localhost:5000/login", {
+      // ✅ FIXED LOGIN API
+      const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,11 +43,10 @@ const Auth = () => {
         return;
       }
 
-      // ✅ SAVE TOKEN
       localStorage.setItem("token", data.token);
 
-      // 🔥 FETCH USER
-      const userRes = await fetch("http://localhost:5000/user", {
+      // ✅ FIXED USER API
+      const userRes = await fetch(`${API_URL}/user`, {
         headers: {
           Authorization: "Bearer " + data.token,
         },
@@ -60,10 +59,8 @@ const Auth = () => {
         return;
       }
 
-      // ✅ SAVE USER
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // 🚀 REDIRECT
       navigate("/dashboard");
 
     } catch (err) {

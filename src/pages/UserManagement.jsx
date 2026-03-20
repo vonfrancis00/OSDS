@@ -9,13 +9,14 @@ import {
   ToggleRight,
 } from "lucide-react";
 import AddUserModal from "../components/AddUserModal";
+import API_URL from "../utils/api"; // ✅ ADD THIS
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
 
   const fetchUsers = async () => {
-    const res = await fetch("http://localhost:5000/users", {
+    const res = await fetch(`${API_URL}/users`, { // ✅ FIXED
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token"),
       },
@@ -26,7 +27,7 @@ const UserManagement = () => {
   };
 
   const updateRole = async (id, role) => {
-    await fetch(`http://localhost:5000/users/${id}/role`, {
+    await fetch(`${API_URL}/users/${id}/role`, { // ✅ FIXED
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -40,7 +41,7 @@ const UserManagement = () => {
 
   // 🔥 UPDATE STATUS
   const updateStatus = async (id, status) => {
-    await fetch(`http://localhost:5000/users/${id}/status`, {
+    await fetch(`${API_URL}/users/${id}/status`, { // ✅ FIXED
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -58,7 +59,7 @@ const UserManagement = () => {
     );
     if (!confirmDelete) return;
 
-    await fetch(`http://localhost:5000/users/${id}`, {
+    await fetch(`${API_URL}/users/${id}`, { // ✅ FIXED
       method: "DELETE",
       headers: {
         Authorization: "Bearer " + localStorage.getItem("token"),
@@ -102,7 +103,6 @@ const UserManagement = () => {
       label: "Inactive",
     },
   };
-
   return (
     <MainLayout>
       <div className="p-8 bg-gray-50 min-h-screen">
