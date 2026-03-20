@@ -12,11 +12,22 @@ const app = express();
 // =============================
 app.use(cors({
   origin: [
-  "http://localhost:5173",
-  "https://osds-three.vercel.app"
-],
+    "http://localhost:5173",
+    "https://osds-three.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
+
+// ✅ HANDLE PREFLIGHT MANUALLY (WORKS IN EXPRESS 5)
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 app.use(express.json());
 
