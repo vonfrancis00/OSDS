@@ -15,6 +15,7 @@ import UserManagement from "./pages/UserManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { isAuthenticated } from "./utils/auth";
+import API from "./api";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -32,11 +33,11 @@ function App() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/user", {
-          headers: {
-            Authorization: "Bearer " + localStorage.getItem("token"),
-          },
-        });
+        const res = await fetch(`${API}/user`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
 
         const data = await res.json();
         setUser(data);

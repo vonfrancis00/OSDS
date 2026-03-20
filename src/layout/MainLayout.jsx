@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react"; // ✅ added
 import Sidebar from "../components/Sidebar";
+import API from "./api";
 
 const MainLayout = ({ children }) => {
   const [user, setUser] = useState(null); // ✅ added
 
   useEffect(() => { // ✅ added
     const fetchUser = async () => {
-      const res = await fetch("http://localhost:5000/user", {
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
+      const res = await fetch(`${API}/user`, {
+      headers: {
+        Authorization: "Bearer " + localStorage.getItem("token"),
+      },
+    });
 
       const data = await res.json();
       setUser(data);
