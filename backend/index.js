@@ -6,15 +6,63 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const app = express();
-app.use(cors());
+
+// =============================
+// 🌐 CORS CONFIG (IMPORTANT)
+// =============================
+app.use(cors({
+  origin: [
+    "http://localhost:5173", // local dev
+    "https://your-app.vercel.app" // 🔥 CHANGE THIS after deploy
+  ],
+  credentials: true
+}));
+
 app.use(express.json());
 
+// =============================
+// 🔌 MONGODB CONNECTION
+// =============================
 const client = new MongoClient(process.env.MONGO_URI);
-
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
 let db;
 
+// =============================
+// 🔐 HELPER: VERIFY TOKEN
+// =============================
+const verifyToken = (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      res.status(401).json({ message: "No token provided" });
+      return null;
+    }
+
+    const token = authHeader.split(" ")[1];
+    return jwt.verify(token, JWT_SECRET);
+
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Token expired" });
+    } else {
+      res.status(401).json({ message: "Invalid token" });
+    }
+    return null;
+  }
+};
+
+// =============================
+// 🩺 HEALTH CHECK (FOR RENDER)
+// =============================
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
+
+// =============================
+// 🚀 START SERVER
+// =============================
 async function startServer() {
   try {
     await client.connect();
@@ -22,78 +70,83 @@ async function startServer() {
 
     db = client.db("scholarDB");
 
-    app.listen(process.env.PORT, () => {
-      console.log(`🚀 Server running on port ${process.env.PORT}`);
+    const PORT = process.env.PORT || 5000;
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("❌ DB Connection Error:", err);
   }
 }
 
-startServer();
-
-
 // =============================
-// 🔐 AUTH ROUTES
+// 🔐 REGISTER
 // =============================
-
-// 🔐 REGISTER (SUPERADMIN ONLY)
 app.post("/register", async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const decoded = verifyToken(req, res);
+    if (!decoded) return;
 
-    // 🔐 TOKEN CHECK
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    // 🔒 ONLY SUPERADMIN
     if (decoded.role !== "superadmin") {
       return res.status(403).json({
         message: "Only super admin can add users",
       });
     }
 
-    // 🔐 CHECK DOMAIN
-    if (!email.endsWith("@ched.gov.ph")) {
+    const {
+      firstName,
+      lastName,
+      middleInitial,
+      suffix,
+      email,
+      password,
+      role,
+    } = req.body;
+
+    if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({
-        message: "Only CHED emails are allowed.",
+        message: "Required fields missing",
       });
     }
 
-    // 🔍 CHECK EXISTING USER
     const existingUser = await db.collection("users").findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({
+        message: "Email already exists",
+      });
     }
 
-    // 🔒 HASH PASSWORD
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 🎯 CREATE USER WITH ROLE
-    const newUser = {
+    const fullName = `${lastName}, ${firstName} ${
+      middleInitial ? middleInitial.toUpperCase() + "." : ""
+    } ${suffix || ""}`.trim();
+
+    await db.collection("users").insertOne({
+      firstName,
+      lastName,
+      middleInitial: middleInitial?.toUpperCase() || "",
+      suffix: suffix || "",
+      fullName,
       email,
       password: hashedPassword,
-      role: role || "user", // ✅ dynamic role
+      role: role || "user",
+      status: "active",
       createdAt: new Date(),
-    };
-
-    await db.collection("users").insertOne(newUser);
+    });
 
     res.json({ message: "User created successfully" });
 
   } catch (err) {
-    res.status(500).json({ message: "Invalid or expired token" });
+    res.status(500).json({ message: err.message });
   }
 });
 
-
-// LOGIN
+// =============================
+// 🔐 LOGIN
+// =============================
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -110,7 +163,12 @@ app.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    // ✅ INCLUDE ROLE HERE
+    if (user.status === "inactive") {
+      return res.status(403).json({
+        message: "Account is inactive",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },
       JWT_SECRET,
@@ -123,161 +181,165 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
+
 // =============================
-// 👤 GET LOGGED-IN USER
+// 👤 GET CURRENT USER
 // =============================
 app.get("/user", async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
+  const decoded = verifyToken(req, res);
+  if (!decoded) return;
 
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-
-    // 🔐 VERIFY TOKEN
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    // 🔍 FIND USER IN DB
-    const user = await db.collection("users").findOne({
-      _id: new ObjectId(decoded.id),
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // ❗ REMOVE PASSWORD BEFORE SENDING
-    delete user.password;
-
-    res.json(user);
-
-  } catch (err) {
-    console.error(err);
-    res.status(401).json({ message: "Invalid or expired token" });
-  }
-});
-
-
-// =============================
-// 📌 SCHOLAR ROUTES (CRUD)
-// =============================
-
-// GET all scholars
-app.get("/scholars", async (req, res) => {
-  const data = await db.collection("scholars").find().toArray();
-  res.json(data);
-});
-
-// ADD scholar
-app.post("/scholars", async (req, res) => {
-  const result = await db.collection("scholars").insertOne(req.body);
-  res.json(result);
-});
-
-// UPDATE scholar
-app.put("/scholars/:id", async (req, res) => {
-  const id = req.params.id;
-
-  const result = await db.collection("scholars").updateOne(
-    { _id: new ObjectId(id) },
-    { $set: req.body }
-  );
-
-  res.json(result);
-});
-
-// DELETE scholar
-app.delete("/scholars/:id", async (req, res) => {
-  const id = req.params.id;
-
-  const result = await db.collection("scholars").deleteOne({
-    _id: new ObjectId(id),
+  const user = await db.collection("users").findOne({
+    _id: new ObjectId(decoded.id),
   });
 
-  res.json(result);
-});
-// =============================
-// 👑 USER MANAGEMENT (SUPER ADMIN ONLY)
-// =============================
-
-// 🔹 GET ALL USERS
-app.get("/users", async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    const currentUser = await db.collection("users").findOne({
-      _id: new ObjectId(decoded.id),
-    });
-
-    // 🔒 ONLY SUPERADMIN
-    if (currentUser.role !== "superadmin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const users = await db.collection("users").find().toArray();
-
-    // ❗ REMOVE PASSWORDS
-    const safeUsers = users.map((u) => {
-      delete u.password;
-      return u;
-    });
-
-    res.json(safeUsers);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
   }
+
+  delete user.password;
+
+  res.json({
+    ...user,
+    status: user.status || "active",
+  });
 });
 
+// =============================
+// 📌 SCHOLARS
+// =============================
+app.get("/scholars", async (req, res) => {
+  res.json(await db.collection("scholars").find().toArray());
+});
 
-// 🔹 UPDATE USER ROLE
-app.put("/users/:id/role", async (req, res) => {
-  try {
-    const { role } = req.body;
+app.post("/scholars", async (req, res) => {
+  res.json(await db.collection("scholars").insertOne(req.body));
+});
 
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    const currentUser = await db.collection("users").findOne({
-      _id: new ObjectId(decoded.id),
-    });
-
-    // 🔒 ONLY SUPERADMIN
-    if (currentUser.role !== "superadmin") {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    // ⚠️ prevent self-role change (recommended)
-    if (decoded.id === req.params.id) {
-      return res.status(400).json({ message: "Cannot change your own role" });
-    }
-
-    await db.collection("users").updateOne(
+app.put("/scholars/:id", async (req, res) => {
+  res.json(
+    await db.collection("scholars").updateOne(
       { _id: new ObjectId(req.params.id) },
-      { $set: { role } }
-    );
-
-    res.json({ message: "Role updated successfully" });
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+      { $set: req.body }
+    )
+  );
 });
+
+app.delete("/scholars/:id", async (req, res) => {
+  res.json(
+    await db.collection("scholars").deleteOne({
+      _id: new ObjectId(req.params.id),
+    })
+  );
+});
+
+// =============================
+// 👑 USERS
+// =============================
+app.get("/users", async (req, res) => {
+  const decoded = verifyToken(req, res);
+  if (!decoded) return;
+
+  const currentUser = await db.collection("users").findOne({
+    _id: new ObjectId(decoded.id),
+  });
+
+  if (currentUser.role !== "superadmin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  const users = await db.collection("users").find().toArray();
+
+  const safeUsers = users.map((u) => {
+    delete u.password;
+    return {
+      ...u,
+      status: u.status || "active",
+    };
+  });
+
+  res.json(safeUsers);
+});
+
+// UPDATE ROLE
+app.put("/users/:id/role", async (req, res) => {
+  const decoded = verifyToken(req, res);
+  if (!decoded) return;
+
+  const currentUser = await db.collection("users").findOne({
+    _id: new ObjectId(decoded.id),
+  });
+
+  if (currentUser.role !== "superadmin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  if (decoded.id === req.params.id) {
+    return res.status(400).json({ message: "Cannot change your own role" });
+  }
+
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(req.params.id) },
+    { $set: { role: req.body.role } }
+  );
+
+  res.json({ message: "Role updated" });
+});
+
+// UPDATE STATUS
+app.put("/users/:id/status", async (req, res) => {
+  const decoded = verifyToken(req, res);
+  if (!decoded) return;
+
+  const currentUser = await db.collection("users").findOne({
+    _id: new ObjectId(decoded.id),
+  });
+
+  if (currentUser.role !== "superadmin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  if (decoded.id === req.params.id) {
+    return res.status(400).json({
+      message: "Cannot deactivate yourself",
+    });
+  }
+
+  await db.collection("users").updateOne(
+    { _id: new ObjectId(req.params.id) },
+    { $set: { status: req.body.status } }
+  );
+
+  res.json({ message: "Status updated" });
+});
+
+// DELETE USER
+app.delete("/users/:id", async (req, res) => {
+  const decoded = verifyToken(req, res);
+  if (!decoded) return;
+
+  const currentUser = await db.collection("users").findOne({
+    _id: new ObjectId(decoded.id),
+  });
+
+  if (currentUser.role !== "superadmin") {
+    return res.status(403).json({ message: "Access denied" });
+  }
+
+  if (decoded.id === req.params.id) {
+    return res.status(400).json({
+      message: "Cannot delete yourself",
+    });
+  }
+
+  await db.collection("users").deleteOne({
+    _id: new ObjectId(req.params.id),
+  });
+
+  res.json({ message: "User deleted" });
+});
+
+startServer();

@@ -23,90 +23,147 @@ const Settings = () => {
     fetchUser();
   }, []);
 
+  const fullName =
+    user?.fullName ||
+    `${user?.lastName || ""}, ${user?.firstName || ""} ${
+      user?.middleInitial ? user.middleInitial + "." : ""
+    } ${user?.suffix || ""}`.trim();
+
+  const initials = `${user?.firstName?.[0] || ""}${
+    user?.lastName?.[0] || ""
+  }`.toUpperCase();
+
   return (
     <MainLayout>
-      <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="p-8 bg-gray-50 min-h-screen">
 
         {/* HEADER */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Settings</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Manage your account information and security
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-500 mt-1">
+            Manage your account, profile, and security preferences
           </p>
         </div>
 
-        {/* GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* MAIN GRID */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-          {/* PROFILE */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-gray-800 mb-5">
-              Profile
-            </h2>
+          {/* LEFT - PROFILE CARD */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl font-bold shadow">
-                {user?.email?.charAt(0).toUpperCase()}
+            {/* AVATAR + NAME */}
+            <div className="flex flex-col items-center text-center">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                {initials || "U"}
               </div>
 
-              <div>
-                <p className="font-semibold text-gray-800 text-base">
-                  {user?.name || "No Name"}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>
-                <span className="font-medium text-gray-700">Role:</span>{" "}
-                {user?.role || "User"}
-              </p>
-            </div>
-          </div>
-
-          {/* ACCOUNT */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition">
-            <h2 className="text-lg font-semibold text-gray-800 mb-5">
-              Account
-            </h2>
-
-            <div className="space-y-3 text-sm text-gray-600">
-              <p>
-                <span className="font-medium text-gray-700">Email:</span>{" "}
-                {user?.email}
-              </p>
-
-              <p>
-                <span className="font-medium text-gray-700">Status:</span>{" "}
-                <span className="text-green-600 font-medium">Active</span>
-              </p>
-
-              <p>
-                <span className="font-medium text-gray-700">Created:</span>{" "}
-                {user?.createdAt
-                  ? new Date(user.createdAt).toLocaleDateString()
-                  : "N/A"}
-              </p>
-            </div>
-          </div>
-
-          {/* SECURITY */}
-          <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                Security
+              <h2 className="mt-4 text-lg font-semibold text-gray-800">
+                {fullName || "No Name"}
               </h2>
-              <p className="text-sm text-gray-500 mb-6">
-                Update your password to keep your account secure
-              </p>
+
+              <p className="text-sm text-gray-500">{user?.email}</p>
+
+              {/* ROLE BADGE */}
+              <span className="mt-3 px-3 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-600">
+                {user?.role?.toUpperCase()}
+              </span>
             </div>
 
-            <button className="w-full bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
-              Change Password
-            </button>
+            {/* DIVIDER */}
+            <div className="my-6 border-t" />
+
+            {/* DETAILS */}
+            <div className="space-y-3 text-sm text-gray-600">
+              <div className="flex justify-between">
+                <span className="text-gray-500">First Name</span>
+                <span className="font-medium text-gray-800">
+                  {user?.firstName || "-"}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Last Name</span>
+                <span className="font-medium text-gray-800">
+                  {user?.lastName || "-"}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Middle Initial</span>
+                <span className="font-medium text-gray-800">
+                  {user?.middleInitial || "-"}
+                </span>
+              </div>
+
+              <div className="flex justify-between">
+                <span className="text-gray-500">Suffix</span>
+                <span className="font-medium text-gray-800">
+                  {user?.suffix || "-"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE */}
+          <div className="xl:col-span-2 space-y-6">
+
+            {/* ACCOUNT INFO */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-6">
+                Account Information
+              </h2>
+
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
+
+                <div>
+                  <p className="text-gray-500 mb-1">Email Address</p>
+                  <p className="font-medium text-gray-800">
+                    {user?.email}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1">Account Status</p>
+                  <p className="font-medium text-green-600">
+                    Active
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1">Account Created</p>
+                  <p className="font-medium text-gray-800">
+                    {user?.createdAt
+                      ? new Date(user.createdAt).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-gray-500 mb-1">Role</p>
+                  <p className="font-medium text-gray-800">
+                    {user?.role}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* SECURITY */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Security
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Keep your account safe by updating your password regularly
+                </p>
+              </div>
+
+              <button className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition shadow-sm">
+                Change Password
+              </button>
+            </div>
+
           </div>
 
         </div>

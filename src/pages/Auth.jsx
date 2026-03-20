@@ -5,8 +5,8 @@ import { Eye, EyeOff } from "lucide-react";
 const Auth = () => {
   const navigate = useNavigate();
 
-  // 🔥 LOGIN ONLY (no public register)
-  const [email, setEmail] = useState("");
+  // 🔥 EMAIL WITH FIXED DOMAIN
+  const [email, setEmail] = useState("@ched.gov.ph");
   const [password, setPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -14,10 +14,13 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async () => {
+  // ✅ HANDLE SUBMIT (WITH ENTER SUPPORT)
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+
     setError("");
 
-    if (!email || !password) {
+    if (!email || email === "@ched.gov.ph" || !password) {
       setError("Please fill in all fields");
       return;
     }
@@ -25,7 +28,6 @@ const Auth = () => {
     try {
       setLoading(true);
 
-      // 🔐 LOGIN REQUEST
       const res = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: {
@@ -44,7 +46,7 @@ const Auth = () => {
       // ✅ SAVE TOKEN
       localStorage.setItem("token", data.token);
 
-      // 🔥 FETCH USER (WITH ROLE)
+      // 🔥 FETCH USER
       const userRes = await fetch("http://localhost:5000/user", {
         headers: {
           Authorization: "Bearer " + data.token,
@@ -58,10 +60,10 @@ const Auth = () => {
         return;
       }
 
-      // ✅ SAVE USER (VERY IMPORTANT)
+      // ✅ SAVE USER
       localStorage.setItem("user", JSON.stringify(userData));
 
-      // 🚀 GO TO DASHBOARD
+      // 🚀 REDIRECT
       navigate("/dashboard");
 
     } catch (err) {
@@ -110,16 +112,25 @@ const Auth = () => {
             </p>
           </div>
 
-          <div className="flex flex-col gap-5">
+          {/* ✅ FORM (ENABLES ENTER KEY SUBMIT) */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
             {/* EMAIL */}
-            <input
-              type="email"
-              placeholder="@ched.gov.ph"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500"
-            />
+            <div className="flex items-center border rounded-xl bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500">
+              <input
+                type="text"
+                placeholder="username"
+                value={email.replace("@ched.gov.ph", "")}
+                onChange={(e) => {
+                  const username = e.target.value.replace("@ched.gov.ph", "");
+                  setEmail(username + "@ched.gov.ph");
+                }}
+                className="flex-1 px-4 py-3 bg-transparent outline-none"
+              />
+              <span className="px-3 text-gray-500 text-sm">
+                @ched.gov.ph
+              </span>
+            </div>
 
             {/* PASSWORD */}
             <div className="relative">
@@ -140,7 +151,7 @@ const Auth = () => {
 
             {/* BUTTON */}
             <button
-              onClick={handleSubmit}
+              type="submit"
               disabled={loading}
               className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition"
             >
@@ -152,10 +163,10 @@ const Auth = () => {
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
 
-          </div>
+          </form>
 
           <p className="text-center text-xs text-gray-400 mt-6">
-            © 2026 Scholarship System - OCDRA III
+            © 2026 Scholarship Analytics System
           </p>
 
         </div>

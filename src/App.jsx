@@ -18,31 +18,45 @@ import { isAuthenticated } from "./utils/auth";
 
 function App() {
   const [user, setUser] = useState(() => {
-    // ✅ LOAD FROM LOCALSTORAGE FIRST (IMPORTANT FIX)
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
+  const [loading, setLoading] = useState(true); // 🔥 ADD THIS
+
   useEffect(() => {
-    if (isAuthenticated()) {
-      fetch("http://localhost:5000/user", {
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      })
-        .then(res => res.json())
-        .then(data => {
-          setUser(data);
-          localStorage.setItem("user", JSON.stringify(data)); // ✅ KEEP SYNCED
-        })
-        .catch(() => {
-          // ❌ token invalid → logout
-          localStorage.removeItem("token");
-          localStorage.removeItem("user");
-          setUser(null);
+    const fetchUser = async () => {
+      if (!isAuthenticated()) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/user", {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
         });
-    }
+
+        const data = await res.json();
+        setUser(data);
+        localStorage.setItem("user", JSON.stringify(data));
+      } catch {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser(null);
+      } finally {
+        setLoading(false); // 🔥 IMPORTANT
+      }
+    };
+
+    fetchUser();
   }, []);
+
+  // 🔥 THIS FIXES YOUR PROBLEM
+  if (loading) {
+    return <div className="p-6">Loading...</div>;
+  }
 
   return (
     <BrowserRouter>
@@ -136,7 +150,7 @@ function App() {
           }
         />
 
-        {/* 👑 SUPERADMIN ONLY */}
+        {/* SUPERADMIN ONLY */}
         <Route
           path="/users"
           element={

@@ -2,17 +2,15 @@ import { Navigate } from "react-router-dom";
 import { isAuthenticated } from "../utils/auth";
 
 const ProtectedRoute = ({ children, user, allowedRoles }) => {
-  // ❌ Not logged in
   if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
 
-  // ⏳ Wait for user to load (prevents flicker / bypass)
+  // 🔥 DO NOT RETURN NULL
   if (!user) {
-    return null; // or loading spinner
+    return <div className="p-6">Loading...</div>;
   }
 
-  // 🔒 Role restriction
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
   }
