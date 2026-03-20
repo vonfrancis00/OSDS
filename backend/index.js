@@ -12,9 +12,9 @@ const app = express();
 // =============================
 app.use(cors({
   origin: [
-    "http://localhost:5173",
-    "https://your-app.vercel.app" // 🔥 REPLACE WITH REAL VERCEL URL
-  ],
+  "http://localhost:5173",
+  "https://osds-three.vercel.app"
+],
   credentials: true
 }));
 
