@@ -348,5 +348,65 @@ app.delete("/users/:id", async (req, res) => {
 
   res.json({ message: "User deleted" });
 });
+// =============================
+// 🔐 CHANGE PASSWORD
+// =============================
+app.put("/change-password", async (req, res) => {
+  try {
+    const decoded = verifyToken(req, res);
+    if (!decoded) return;
+
+    const { currentPassword, newPassword } = req.body;
+
+    // ❗ Validation
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "All fields are required",
+      });
+    }
+
+    // 🔍 Find user
+    const user = await db.collection("users").findOne({
+      _id: new ObjectId(decoded.id),
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // 🔐 Check current password
+    const isMatch = await bcrypt.compare(
+      currentPassword,
+      user.password
+    );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password is incorrect",
+      });
+    }
+
+    // 🔐 Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 💾 Update password
+    await db.collection("users").updateOne(
+      { _id: new ObjectId(decoded.id) },
+      { $set: { password: hashedPassword } }
+    );
+
+    res.json({
+      message: "Password updated successfully",
+    });
+
+  } catch (err) {
+    console.error("Change Password Error:", err);
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+});
 
 startServer();
