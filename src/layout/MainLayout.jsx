@@ -1,36 +1,16 @@
-import { useEffect, useState } from "react"; // ✅ added
+import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
-import API from "../utils/api";
 
-const MainLayout = ({ children }) => {
-  const [user, setUser] = useState(null); // ✅ added
-
-  useEffect(() => { // ✅ added
-    const fetchUser = async () => {
-      const res = await fetch(`${API}/user`, {
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-    });
-
-      const data = await res.json();
-      setUser(data);
-    };
-
-    fetchUser();
-  }, []);
-
-  if (!user) return null; // ✅ added
-
+const MainLayout = () => {
   return (
-    <div>
+    <div className="flex">
 
-      {/* ✅ added user prop */}
-      <Sidebar user={user} />
+      {/* Sidebar */}
+      <Sidebar />
 
-      {/* Dashboard Content */}
-      <main className="ml-24 p-6">
-        {children}
+      {/* ✅ FIXED CONTENT (PERFECT ALIGNMENT) */}
+      <main className="ml-24 w-[calc(100%-6rem)] p-6 bg-gray-100 min-h-screen">
+        <Outlet />
       </main>
 
     </div>

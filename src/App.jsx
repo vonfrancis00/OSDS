@@ -14,15 +14,12 @@ import UserManagement from "./pages/UserManagement";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
+import MainLayout from "./layout/MainLayout";
+
 import { isAuthenticated } from "./utils/auth";
 import API from "./utils/api";
 
 function App() {
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem("user");
-    return storedUser ? JSON.parse(storedUser) : null;
-  });
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,15 +40,13 @@ function App() {
 
         const data = await res.json();
 
-        // ✅ FIX: backend returns flat object
-        setUser(data);
+        // ✅ Save fresh user to localStorage
         localStorage.setItem("user", JSON.stringify(data));
 
       } catch (err) {
         console.error(err);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -68,6 +63,7 @@ function App() {
     <BrowserRouter>
       <Routes>
 
+        {/* ROOT REDIRECT */}
         <Route
           path="/"
           element={
@@ -78,6 +74,7 @@ function App() {
           }
         />
 
+        {/* PUBLIC ROUTE */}
         <Route
           path="/login"
           element={
@@ -87,87 +84,93 @@ function App() {
           }
         />
 
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute user={user}>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
+        {/* ✅ MAIN LAYOUT (SIDEBAR ALWAYS HERE) */}
+        <Route element={<MainLayout />}>
 
-        <Route
-          path="/scholars"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <Scholars />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/scholars/:id"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <ScholarDetails />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/scholars"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <Scholars />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/reports"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <Reports />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/scholars/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <ScholarDetails />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/msrs"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <MSRS />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <Reports />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/sikap"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <SIKAP />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/msrs"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <MSRS />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/husay"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["admin", "superadmin"]}>
-              <HUSAY />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/sikap"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <SIKAP />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/users"
-          element={
-            <ProtectedRoute user={user} allowedRoles={["superadmin"]}>
-              <UserManagement />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/husay"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <HUSAY />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute user={user}>
-              <Settings />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute allowedRoles={["superadmin"]}>
+                <UserManagement />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+        </Route>
+
+        {/* FALLBACK */}
         <Route
           path="*"
           element={

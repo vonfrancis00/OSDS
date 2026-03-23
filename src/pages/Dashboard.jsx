@@ -1,6 +1,4 @@
-import MainLayout from "../layout/MainLayout";
 import StatCard from "../components/StatCard";
-
 import { Users, FileText, CheckCircle, Clock } from "lucide-react";
 
 import {
@@ -44,7 +42,7 @@ const COLORS = ["#22c55e", "#facc15", "#ef4444"];
 
 const Dashboard = () => {
   return (
-    <MainLayout>
+    <div>
 
       <h2 className="text-3xl font-bold text-gray-800 mb-8">
         Dashboard Overview
@@ -154,7 +152,7 @@ const Dashboard = () => {
 
       </div>
 
-    </MainLayout>
+    </div>
   );
 };
 

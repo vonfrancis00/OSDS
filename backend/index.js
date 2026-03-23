@@ -95,6 +95,7 @@ app.post("/register", async (req, res) => {
     const decoded = verifyToken(req, res);
     if (!decoded) return;
 
+    // 🔒 Only superadmin can create users
     if (decoded.role !== "superadmin") {
       return res.status(403).json({
         message: "Only super admin can add users",
@@ -111,12 +112,14 @@ app.post("/register", async (req, res) => {
       role,
     } = req.body;
 
+    // ❗ Validation
     if (!firstName || !lastName || !email || !password) {
       return res.status(400).json({
         message: "Required fields missing",
       });
     }
 
+    // ❗ Check duplicate email
     const existingUser = await db.collection("users").findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -124,13 +127,16 @@ app.post("/register", async (req, res) => {
       });
     }
 
+    // 🔐 Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 🧠 Build full name
     const fullName = `${lastName}, ${firstName} ${
       middleInitial ? middleInitial.toUpperCase() + "." : ""
     } ${suffix || ""}`.trim();
 
-    await db.collection("users").insertOne({
+    // 📦 Prepare data
+    const newUserData = {
       firstName,
       lastName,
       middleInitial: middleInitial?.toUpperCase() || "",
@@ -141,12 +147,32 @@ app.post("/register", async (req, res) => {
       role: role || "user",
       status: "active",
       createdAt: new Date(),
-    });
+    };
 
-    res.json({ message: "User created successfully" });
+    // 💾 Insert to MongoDB
+    const result = await db.collection("users").insertOne(newUserData);
+
+    // 🔥 VERY IMPORTANT: Return FULL USER (NO PASSWORD)
+    const newUser = {
+      _id: result.insertedId.toString(), // ✅ ensure string (frontend safe)
+      firstName: newUserData.firstName,
+      lastName: newUserData.lastName,
+      middleInitial: newUserData.middleInitial,
+      suffix: newUserData.suffix,
+      fullName: newUserData.fullName,
+      email: newUserData.email,
+      role: newUserData.role,
+      status: newUserData.status,
+      createdAt: newUserData.createdAt,
+    };
+
+    return res.status(201).json(newUser); // ✅ proper status
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Register Error:", err);
+    return res.status(500).json({
+      message: "Server error",
+    });
   }
 });
 

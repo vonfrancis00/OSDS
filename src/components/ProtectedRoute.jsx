@@ -1,17 +1,19 @@
 import { Navigate } from "react-router-dom";
-import { isAuthenticated } from "../utils/auth";
+import { getUser } from "../utils/auth";
 
-const ProtectedRoute = ({ children, user, allowedRoles }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const user = getUser();
 
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
+  if (!user) return <Navigate to="/login" />;
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+  // 🔥 NORMALIZE ROLE (CRITICAL FIX)
+  const role = user?.role
+    ? user.role.toLowerCase().replace(/[\s_-]/g, "")
+    : "";
+
+  // 🔥 CHECK USING NORMALIZED ROLE
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    return <Navigate to="/dashboard" />;
   }
 
   return children;

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import MainLayout from "../layout/MainLayout";
 import {
   Shield,
   Crown,
@@ -9,48 +8,74 @@ import {
   ToggleRight,
 } from "lucide-react";
 import AddUserModal from "../components/AddUserModal";
-import API_URL from "../utils/api"; // ✅ ADD THIS
+import API_URL from "../utils/api";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const fetchUsers = async () => {
-    const res = await fetch(`${API_URL}/users`, { // ✅ FIXED
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-    });
+    try {
+      setLoading(true);
 
-    const data = await res.json();
-    setUsers(data);
+      const res = await fetch(`${API_URL}/users`, {
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateRole = async (id, role) => {
-    await fetch(`${API_URL}/users/${id}/role`, { // ✅ FIXED
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-      body: JSON.stringify({ role }),
-    });
+    const oldUsers = [...users];
 
-    fetchUsers();
+    setUsers((prev) =>
+      prev.map((u) => (u._id === id ? { ...u, role } : u))
+    );
+
+    try {
+      await fetch(`${API_URL}/users/${id}/role`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+        body: JSON.stringify({ role }),
+      });
+    } catch (err) {
+      console.error(err);
+      setUsers(oldUsers);
+    }
   };
 
-  // 🔥 UPDATE STATUS
   const updateStatus = async (id, status) => {
-    await fetch(`${API_URL}/users/${id}/status`, { // ✅ FIXED
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-      body: JSON.stringify({ status }),
-    });
+    const oldUsers = [...users];
 
-    fetchUsers();
+    setUsers((prev) =>
+      prev.map((u) => (u._id === id ? { ...u, status } : u))
+    );
+
+    try {
+      await fetch(`${API_URL}/users/${id}/status`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+        body: JSON.stringify({ status }),
+      });
+    } catch (err) {
+      console.error(err);
+      setUsers(oldUsers);
+    }
   };
 
   const deleteUser = async (id) => {
@@ -59,14 +84,21 @@ const UserManagement = () => {
     );
     if (!confirmDelete) return;
 
-    await fetch(`${API_URL}/users/${id}`, { // ✅ FIXED
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + localStorage.getItem("token"),
-      },
-    });
+    const oldUsers = [...users];
 
-    fetchUsers();
+    setUsers((prev) => prev.filter((u) => u._id !== id));
+
+    try {
+      await fetch(`${API_URL}/users/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer " + localStorage.getItem("token"),
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      setUsers(oldUsers);
+    }
   };
 
   useEffect(() => {
@@ -103,44 +135,51 @@ const UserManagement = () => {
       label: "Inactive",
     },
   };
+
   return (
-    <MainLayout>
-      <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-50 min-h-screen">
 
-        {/* HEADER */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">
-              User Management
-            </h1>
-            <p className="text-gray-500 text-sm">
-              Manage user roles and account status
-            </p>
-          </div>
-
-          <button
-            onClick={() => setIsAddUserModalOpen(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm text-sm"
-          >
-            + Register User
-          </button>
+      {/* HEADER */}
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">
+            User Management
+          </h1>
+          <p className="text-gray-500 text-sm">
+            Manage user roles and account status
+          </p>
         </div>
 
-        {/* TABLE CARD */}
-        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+        <button
+          onClick={() => setIsAddUserModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm text-sm"
+        >
+          + Register User
+        </button>
+      </div>
 
-          {/* HEADER */}
-          <div className="grid grid-cols-5 px-6 py-4 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            <span>Email</span>
-            <span>Role</span>
-            <span>Status</span>
-            <span>Controls</span>
-            <span className="text-center">Actions</span>
+      {/* TABLE CARD */}
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+
+        {/* HEADER */}
+        <div className="grid grid-cols-5 px-6 py-4 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          <span>Email</span>
+          <span>Role</span>
+          <span>Status</span>
+          <span>Controls</span>
+          <span className="text-center">Actions</span>
+        </div>
+
+        {/* LOADING */}
+        {loading ? (
+          <div className="p-10 flex justify-center">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
-
-          {/* USERS */}
+        ) : (
           <div className="divide-y">
             {users.map((u) => {
+              if (!u) return null; // ✅ ADD THIS LINE HERE
+
               const role = roleConfig[u.role] || roleConfig["user"];
               const status = statusConfig[u.status || "active"];
 
@@ -165,9 +204,7 @@ const UserManagement = () => {
 
                   {/* ROLE */}
                   <div>
-                    <span
-                      className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${role.color}`}
-                    >
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${role.color}`}>
                       {role.icon}
                       {role.label}
                     </span>
@@ -175,9 +212,7 @@ const UserManagement = () => {
 
                   {/* STATUS */}
                   <div>
-                    <span
-                      className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}
-                    >
+                    <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}>
                       {status.icon}
                       {status.label}
                     </span>
@@ -185,7 +220,6 @@ const UserManagement = () => {
 
                   {/* CONTROLS */}
                   <div className="flex gap-2">
-                    {/* ROLE */}
                     <select
                       value={u.role}
                       onChange={(e) =>
@@ -198,7 +232,6 @@ const UserManagement = () => {
                       <option value="superadmin">Super Admin</option>
                     </select>
 
-                    {/* STATUS */}
                     <select
                       value={u.status || "active"}
                       onChange={(e) =>
@@ -224,23 +257,25 @@ const UserManagement = () => {
               );
             })}
           </div>
+        )}
 
-          {/* EMPTY */}
-          {users.length === 0 && (
-            <div className="p-8 text-center text-gray-400">
-              No users found.
-            </div>
-          )}
-        </div>
+        {/* EMPTY */}
+        {!loading && users.length === 0 && (
+          <div className="p-8 text-center text-gray-400">
+            No users found.
+          </div>
+        )}
       </div>
 
       {/* MODAL */}
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
-        onUserAdded={fetchUsers}
+        onUserAdded={() => {
+          fetchUsers(); // 🔥 refresh list automatically
+        }}
       />
-    </MainLayout>
+    </div>
   );
 };
 

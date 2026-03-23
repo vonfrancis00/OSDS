@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { X, UserPlus } from "lucide-react";
-import API_URL from "../utils/api"; // ✅ ADD THIS
+import { X, UserPlus, CheckCircle } from "lucide-react"; // ✅ added CheckCircle
+import API_URL from "../utils/api";
 
 const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   const [form, setForm] = useState({
@@ -14,6 +14,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false); // ✅ added
   const [error, setError] = useState("");
 
   if (!isOpen) return null;
@@ -31,7 +32,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
     setError("");
 
     try {
-      const res = await fetch(`${API_URL}/register`, { // ✅ FIXED
+      const res = await fetch(`${API_URL}/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -41,11 +42,19 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to register");
 
-      onUserAdded();
-      onClose();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to register");
+      }
 
+      // ✅ SUCCESS ANIMATION TRIGGER
+      setSuccess(true);
+
+      if (onUserAdded) {
+        onUserAdded(data);
+      }
+
+      // reset form
       setForm({
         firstName: "",
         lastName: "",
@@ -55,6 +64,13 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
         password: "",
         role: "user",
       });
+
+      // ⏳ delay close so user sees animation
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 1500);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -64,8 +80,22 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+      
       <div className="bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-2xl p-6 relative border border-gray-100">
 
+        {/* ✅ SUCCESS OVERLAY */}
+        {success && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white/80 backdrop-blur-md rounded-2xl z-50">
+            <div className="flex flex-col items-center gap-2">
+              <CheckCircle className="text-green-500 animate-bounce" size={50} />
+              <p className="text-green-600 font-semibold">
+                User Created Successfully
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* HEADER */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <UserPlus className="text-blue-600" size={22} />
@@ -82,12 +112,14 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
           </button>
         </div>
 
+        {/* ERROR */}
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-lg mb-4">
             {error}
           </div>
         )}
 
+        {/* FORM */}
         <form onSubmit={handleSubmit} className="space-y-4">
 
           <div className="grid grid-cols-2 gap-3">
@@ -153,7 +185,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
               required
               value={form.email}
               onChange={handleChange}
-              placeholder="@ched.gov.ph"
               className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -166,7 +197,6 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
               required
               value={form.password}
               onChange={handleChange}
-              placeholder="••••••••"
               className="w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -198,6 +228,13 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
             {loading ? "Creating user..." : "Create User"}
           </button>
         </form>
+
+        {/* ✅ LOADING OVERLAY */}
+        {loading && (
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-2xl">
+            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
       </div>
     </div>
   );

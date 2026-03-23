@@ -15,8 +15,7 @@ const Auth = () => {
   const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-
+    e.preventDefault();
     setError("");
 
     if (!email || email === "@ched.gov.ph" || !password) {
@@ -42,21 +41,36 @@ const Auth = () => {
         return;
       }
 
-      // ✅ FIX: store token only
+      // ✅ STORE TOKEN
       localStorage.setItem("token", data.token);
 
-      // 🔥 FIX: remove old user to avoid mismatch
-      localStorage.removeItem("user");
+      // ✅ STORE USER IF BACKEND RETURNS IT
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      } else {
+        // 🔥 FALLBACK: FETCH USER IMMEDIATELY
+        const userRes = await fetch(`${API_URL}/user`, {
+          headers: {
+            Authorization: "Bearer " + data.token,
+          },
+        });
 
+        if (!userRes.ok) throw new Error("Failed to fetch user");
+
+        const userData = await userRes.json();
+        localStorage.setItem("user", JSON.stringify(userData));
+      }
+
+      // ✅ NAVIGATE AFTER EVERYTHING IS READY
       navigate("/dashboard");
 
     } catch (err) {
+      console.error(err);
       setError("Server error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
 
   return (
     <div className="min-h-screen flex">
@@ -97,7 +111,7 @@ const Auth = () => {
             </p>
           </div>
 
-          {/* ✅ FORM (ENABLES ENTER KEY SUBMIT) */}
+          {/* FORM */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
             {/* EMAIL */}

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import MainLayout from "../layout/MainLayout";
 import { Search, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -62,7 +61,7 @@ const Scholars = () => {
   };
 
   return (
-    <MainLayout>
+    <div>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -98,7 +97,6 @@ const Scholars = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-xl shadow p-4 mb-6 flex flex-wrap gap-4 items-center">
-        {/* Search */}
         <div className="flex items-center border rounded-lg px-3 py-2 w-64">
           <Search size={18} className="text-gray-400 mr-2" />
           <input
@@ -110,7 +108,6 @@ const Scholars = () => {
           />
         </div>
 
-        {/* Region */}
         <select
           className="border rounded-lg px-3 py-2 text-sm"
           value={region}
@@ -122,7 +119,6 @@ const Scholars = () => {
           <option>Region IV-A</option>
         </select>
 
-        {/* Course */}
         <select
           className="border rounded-lg px-3 py-2 text-sm"
           value={course}
@@ -134,7 +130,6 @@ const Scholars = () => {
           <option>BS Information Systems</option>
         </select>
 
-        {/* Scholar Type */}
         <select
           className="border rounded-lg px-3 py-2 text-sm"
           value={type}
@@ -146,7 +141,6 @@ const Scholars = () => {
           <option>Financial Assistance</option>
         </select>
 
-        {/* Academic Year */}
         <select
           className="border rounded-lg px-3 py-2 text-sm"
           value={year}
@@ -157,7 +151,6 @@ const Scholars = () => {
           <option>2024-2025</option>
         </select>
 
-        {/* Status */}
         <select
           className="border rounded-lg px-3 py-2 text-sm"
           value={status}
@@ -168,7 +161,6 @@ const Scholars = () => {
           <option>Pending</option>
         </select>
 
-        {/* Clear Filters */}
         <button
           onClick={clearFilters}
           className="bg-red-400 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-semibold"
@@ -207,11 +199,8 @@ const Scholars = () => {
                 </td>
 
                 <td className="px-6 py-4 text-gray-600">{student.region}</td>
-
                 <td className="px-6 py-4 text-gray-600">{student.course}</td>
-
                 <td className="px-6 py-4 text-gray-600">{student.type}</td>
-
                 <td className="px-6 py-4 text-gray-600">{student.year}</td>
 
                 <td className="px-6 py-4">
@@ -239,7 +228,7 @@ const Scholars = () => {
           </tbody>
         </table>
       </div>
-    </MainLayout>
+    </div>
   );
 };
 

@@ -2,27 +2,29 @@ import { Home, Users, BarChart3, Menu, X, LogOut, Settings } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-const Sidebar = ({ user }) => {
+const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  // 🔥 CRITICAL FIX: STABLE ROLE (NO FLICKER)
   const storedUser = JSON.parse(localStorage.getItem("user"));
-  const role = user?.role || storedUser?.role || "guest";
+
+  // 🔥 NORMALIZE ROLE (THIS FIXES EVERYTHING)
+  const role = storedUser?.role
+    ? storedUser.role.toLowerCase().replace(/[\s_-]/g, "")
+    : "guest";
 
   const isSuperAdmin = role === "superadmin";
   const isAdmin = role === "admin";
-  const isUser = role === "user";
 
   const handleLogout = () => setShowLogoutModal(true);
 
   const confirmLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    navigate("/login");
+    navigate("/");
   };
 
   return (
@@ -45,12 +47,9 @@ const Sidebar = ({ user }) => {
 
         {/* Logo */}
         <div className="flex flex-col items-center p-4 border-b border-blue-800">
-          <div className="flex flex-col items-center gap-2
-                          group-hover:flex-row group-hover:gap-3 transition-all">
-
+          <div className="flex flex-col items-center gap-2 group-hover:flex-row group-hover:gap-3 transition-all">
             <img src="/ched.png" className="w-10 h-10" />
             <img src="/achieve.png" className="w-10 h-10" />
-
           </div>
 
           <span className="mt-2 font-bold opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
@@ -61,7 +60,7 @@ const Sidebar = ({ user }) => {
         {/* Navigation */}
         <nav className="mt-6">
 
-          {/* Dashboard (ALWAYS) */}
+          {/* Dashboard */}
           <SidebarItem
             to="/dashboard"
             icon={<Home size={22} />}
@@ -76,7 +75,7 @@ const Sidebar = ({ user }) => {
               <div className="group/item relative">
                 <div
                   className={`flex items-center gap-4 p-4 cursor-pointer ${
-                    location.pathname.includes("/scholars") ||
+                    location.pathname.startsWith("/scholars") ||
                     location.pathname === "/msrs" ||
                     location.pathname === "/sikap" ||
                     location.pathname === "/husay"
