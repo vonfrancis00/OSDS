@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import API_URL from "../utils/api"; // ✅ ADD THIS
+import API_URL from "../utils/api";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ const Auth = () => {
     try {
       setLoading(true);
 
-      // ✅ FIXED LOGIN API
       const res = await fetch(`${API_URL}/login`, {
         method: "POST",
         headers: {
@@ -43,23 +42,11 @@ const Auth = () => {
         return;
       }
 
+      // ✅ FIX: store token only
       localStorage.setItem("token", data.token);
 
-      // ✅ FIXED USER API
-      const userRes = await fetch(`${API_URL}/user`, {
-        headers: {
-          Authorization: "Bearer " + data.token,
-        },
-      });
-
-      const userData = await userRes.json();
-
-      if (!userRes.ok) {
-        setError("Failed to fetch user data");
-        return;
-      }
-
-      localStorage.setItem("user", JSON.stringify(userData));
+      // 🔥 FIX: remove old user to avoid mismatch
+      localStorage.removeItem("user");
 
       navigate("/dashboard");
 
@@ -69,6 +56,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex">

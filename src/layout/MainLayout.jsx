@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"; // ✅ added
 import Sidebar from "../components/Sidebar";
-import API from "./api";
+import API from "../utils/api";
 
 const MainLayout = ({ children }) => {
   const [user, setUser] = useState(null); // ✅ added

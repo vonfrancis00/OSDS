@@ -15,7 +15,7 @@ import UserManagement from "./pages/UserManagement";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicRoute from "./components/PublicRoute";
 import { isAuthenticated } from "./utils/auth";
-import API from "./api";
+import API from "./utils/api";
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -23,7 +23,7 @@ function App() {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const [loading, setLoading] = useState(true); // 🔥 ADD THIS
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -34,27 +34,32 @@ function App() {
 
       try {
         const res = await fetch(`${API}/user`, {
-        headers: {
-          Authorization: "Bearer " + localStorage.getItem("token"),
-        },
-      });
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        });
+
+        if (!res.ok) throw new Error("Unauthorized");
 
         const data = await res.json();
+
+        // ✅ FIX: backend returns flat object
         setUser(data);
         localStorage.setItem("user", JSON.stringify(data));
-      } catch {
+
+      } catch (err) {
+        console.error(err);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
       } finally {
-        setLoading(false); // 🔥 IMPORTANT
+        setLoading(false);
       }
     };
 
     fetchUser();
   }, []);
 
-  // 🔥 THIS FIXES YOUR PROBLEM
   if (loading) {
     return <div className="p-6">Loading...</div>;
   }
@@ -63,7 +68,6 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* ROOT */}
         <Route
           path="/"
           element={
@@ -74,7 +78,6 @@ function App() {
           }
         />
 
-        {/* LOGIN */}
         <Route
           path="/login"
           element={
@@ -84,7 +87,6 @@ function App() {
           }
         />
 
-        {/* DASHBOARD */}
         <Route
           path="/dashboard"
           element={
@@ -94,7 +96,6 @@ function App() {
           }
         />
 
-        {/* SCHOLARS */}
         <Route
           path="/scholars"
           element={
@@ -113,7 +114,6 @@ function App() {
           }
         />
 
-        {/* REPORTS */}
         <Route
           path="/reports"
           element={
@@ -123,7 +123,6 @@ function App() {
           }
         />
 
-        {/* PROGRAMS */}
         <Route
           path="/msrs"
           element={
@@ -151,7 +150,6 @@ function App() {
           }
         />
 
-        {/* SUPERADMIN ONLY */}
         <Route
           path="/users"
           element={
@@ -161,7 +159,6 @@ function App() {
           }
         />
 
-        {/* SETTINGS */}
         <Route
           path="/settings"
           element={
@@ -171,7 +168,6 @@ function App() {
           }
         />
 
-        {/* FALLBACK */}
         <Route
           path="*"
           element={

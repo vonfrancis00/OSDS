@@ -6,9 +6,8 @@ const ProtectedRoute = ({ children, user, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // 🔥 DO NOT RETURN NULL
   if (!user) {
-    return <div className="p-6">Loading...</div>;
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
