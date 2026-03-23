@@ -42,26 +42,28 @@ const COLORS = ["#22c55e", "#facc15", "#ef4444"];
 
 const Dashboard = () => {
   return (
-    <div>
+    <div className="px-4 sm:px-6">
 
-      <h2 className="text-3xl font-bold text-gray-800 mb-8">
+      {/* HEADER */}
+      <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-6 sm:mb-8">
         Dashboard Overview
       </h2>
 
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-10">
+      {/* CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
 
         <StatCard
           title="Total Scholars"
           value="1,250"
-          icon={<Users size={24} />}
+          icon={<Users size={20} />}
           color="bg-blue-500"
+          to="/scholars"
         />
 
         <StatCard
           title="Total MSRS Scholars"
           value="320"
-          icon={<FileText size={24} />}
+          icon={<FileText size={20} />}
           color="bg-purple-500"
           to="/msrs"
         />
@@ -69,7 +71,7 @@ const Dashboard = () => {
         <StatCard
           title="Total SIKAP Scholars"
           value="210"
-          icon={<CheckCircle size={24} />}
+          icon={<CheckCircle size={20} />}
           color="bg-green-500"
           to="/sikap"
         />
@@ -77,26 +79,26 @@ const Dashboard = () => {
         <StatCard
           title="Total HUSAY Scholars"
           value="110"
-          icon={<Clock size={24} />}
+          icon={<Clock size={20} />}
           color="bg-yellow-500"
           to="/husay"
         />
 
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
 
-        {/* Area Chart */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-semibold mb-4">
+        {/* AREA CHART */}
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
+          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">
             Applications Trend
           </h3>
 
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={areaData}>
-              <XAxis dataKey="name" />
-              <YAxis />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
               <Tooltip />
               <Area
                 type="monotone"
@@ -108,36 +110,36 @@ const Dashboard = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* Bar Chart */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-semibold mb-4">
-            Weekly Activity
+        {/* BAR CHART */}
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
+          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">
+            Applications by Day
           </h3>
 
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barData}>
-              <XAxis dataKey="name" />
-              <YAxis />
+              <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
               <Tooltip />
               <Bar dataKey="value" fill="#8b5cf6" />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Pie Chart */}
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-semibold mb-4">
+        {/* PIE CHART */}
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow">
+          <h3 className="font-semibold text-sm sm:text-base mb-3 sm:mb-4">
             Application Status
           </h3>
 
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height={220}>
             <PieChart>
               <Pie
                 data={pieData}
                 dataKey="value"
                 cx="50%"
                 cy="50%"
-                outerRadius={80}
+                outerRadius={70} // slightly smaller for mobile
                 label
               >
                 {pieData.map((entry, index) => (

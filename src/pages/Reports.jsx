@@ -32,78 +32,82 @@ const Reports = () => {
   )
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
 
-      {/* Page Title */}
+      {/* TITLE */}
       <div className="flex items-center gap-3">
-        <BarChart3 className="text-blue-700" size={32}/>
-        <h1 className="text-3xl font-bold">Scholarship Reports</h1>
+        <BarChart3 className="text-blue-700" size={26} />
+        <h1 className="text-2xl sm:text-3xl font-bold">Scholarship Reports</h1>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid md:grid-cols-3 gap-6">
+      {/* SUMMARY CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
 
-        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-4">
-          <Users className="text-blue-600" size={40}/>
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-3 sm:gap-4">
+          <Users className="text-blue-600" size={30} />
           <div>
-            <p className="text-gray-500">Total Scholars</p>
-            <h2 className="text-3xl font-bold">{totalScholars}</h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Total Scholars</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">{totalScholars}</h2>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-4">
-          <Map className="text-green-600" size={40}/>
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-3 sm:gap-4">
+          <Map className="text-green-600" size={30} />
           <div>
-            <p className="text-gray-500">Regions</p>
-            <h2 className="text-3xl font-bold">{regionStats.length}</h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Regions</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">{regionStats.length}</h2>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-4">
-          <GraduationCap className="text-purple-600" size={40}/>
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow hover:shadow-lg transition flex items-center gap-3 sm:gap-4">
+          <GraduationCap className="text-purple-600" size={30} />
           <div>
-            <p className="text-gray-500">Courses</p>
-            <h2 className="text-3xl font-bold">{courseStats.length}</h2>
+            <p className="text-gray-500 text-xs sm:text-sm">Courses</p>
+            <h2 className="text-2xl sm:text-3xl font-bold">{courseStats.length}</h2>
           </div>
         </div>
 
       </div>
 
-      {/* Charts Section */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* CHARTS */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
 
-        {/* Region Chart */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="font-bold text-lg mb-4">Scholars per Region</h2>
+        {/* REGION CHART */}
+        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+          <h2 className="font-bold text-base sm:text-lg mb-4">
+            Scholars per Region
+          </h2>
 
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <BarChart data={regionStats}>
-              <XAxis dataKey="region" />
-              <YAxis />
+              <XAxis dataKey="region" tick={{ fontSize: 10 }} />
+              <YAxis tick={{ fontSize: 10 }} />
               <Tooltip />
-              <Bar dataKey="value" fill="#1d4ed8" radius={[6,6,0,0]}/>
+              <Bar dataKey="value" fill="#1d4ed8" radius={[6,6,0,0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Course Pie Chart */}
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="font-bold text-lg mb-4">Scholars per Course</h2>
+        {/* COURSE PIE */}
+        <div className="bg-white rounded-xl shadow p-4 sm:p-6">
+          <h2 className="font-bold text-base sm:text-lg mb-4">
+            Scholars per Course
+          </h2>
 
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={courseStats}
                 dataKey="value"
                 nameKey="course"
-                outerRadius={110}
+                outerRadius={80} // smaller for mobile
                 label
               >
                 {courseStats.map((entry, index) => (
                   <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip/>
+              <Tooltip />
             </PieChart>
           </ResponsiveContainer>
         </div>

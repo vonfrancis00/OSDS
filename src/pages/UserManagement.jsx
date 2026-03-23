@@ -137,32 +137,32 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 sm:p-8 bg-gray-50 min-h-screen">
 
       {/* HEADER */}
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
             User Management
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs sm:text-sm">
             Manage user roles and account status
           </p>
         </div>
 
         <button
           onClick={() => setIsAddUserModalOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl shadow-sm text-sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-5 py-2 rounded-xl shadow-sm text-sm w-full sm:w-auto"
         >
           + Register User
         </button>
       </div>
 
       {/* TABLE CARD */}
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-x-auto">
 
         {/* HEADER */}
-        <div className="grid grid-cols-5 px-6 py-4 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <div className="hidden sm:grid grid-cols-5 px-6 py-4 bg-gray-50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
           <span>Email</span>
           <span>Role</span>
           <span>Status</span>
@@ -176,9 +176,9 @@ const UserManagement = () => {
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y min-w-[700px] sm:min-w-0">
             {users.map((u) => {
-              if (!u) return null; // ✅ ADD THIS LINE HERE
+              if (!u) return null;
 
               const role = roleConfig[u.role] || roleConfig["user"];
               const status = statusConfig[u.status || "active"];
@@ -186,16 +186,18 @@ const UserManagement = () => {
               return (
                 <div
                   key={u._id}
-                  className="grid grid-cols-5 items-center px-6 py-5 hover:bg-gray-50 transition"
+                  className="grid grid-cols-1 sm:grid-cols-5 gap-3 sm:gap-0 px-4 sm:px-6 py-4 sm:py-5 hover:bg-gray-50 transition"
                 >
                   {/* USER */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
                       {u.email?.charAt(0).toUpperCase()}
                     </div>
 
                     <div>
-                      <p className="text-gray-800 font-medium">{u.email}</p>
+                      <p className="text-gray-800 font-medium text-sm">
+                        {u.email}
+                      </p>
                       <p className="text-xs text-gray-400">
                         ID: {u._id.slice(-6)}
                       </p>
@@ -204,7 +206,7 @@ const UserManagement = () => {
 
                   {/* ROLE */}
                   <div>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${role.color}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs font-semibold rounded-full ${role.color}`}>
                       {role.icon}
                       {role.label}
                     </span>
@@ -212,20 +214,20 @@ const UserManagement = () => {
 
                   {/* STATUS */}
                   <div>
-                    <span className={`inline-flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}>
+                    <span className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 text-xs font-semibold rounded-full ${status.color}`}>
                       {status.icon}
                       {status.label}
                     </span>
                   </div>
 
                   {/* CONTROLS */}
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <select
                       value={u.role}
                       onChange={(e) =>
                         updateRole(u._id, e.target.value)
                       }
-                      className="border border-gray-200 px-3 py-1 rounded-lg text-sm"
+                      className="border border-gray-200 px-3 py-1 rounded-lg text-sm w-full sm:w-auto"
                     >
                       <option value="user">User</option>
                       <option value="admin">Admin</option>
@@ -237,7 +239,7 @@ const UserManagement = () => {
                       onChange={(e) =>
                         updateStatus(u._id, e.target.value)
                       }
-                      className="border border-gray-200 px-3 py-1 rounded-lg text-sm"
+                      className="border border-gray-200 px-3 py-1 rounded-lg text-sm w-full sm:w-auto"
                     >
                       <option value="active">Active</option>
                       <option value="inactive">Inactive</option>
@@ -245,7 +247,7 @@ const UserManagement = () => {
                   </div>
 
                   {/* ACTIONS */}
-                  <div className="flex justify-center">
+                  <div className="flex justify-end sm:justify-center">
                     <button
                       onClick={() => deleteUser(u._id)}
                       className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-600 transition"
@@ -272,7 +274,7 @@ const UserManagement = () => {
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onUserAdded={() => {
-          fetchUsers(); // 🔥 refresh list automatically
+          fetchUsers();
         }}
       />
     </div>

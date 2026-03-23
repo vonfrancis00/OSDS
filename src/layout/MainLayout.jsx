@@ -8,8 +8,8 @@ const MainLayout = () => {
       {/* Sidebar */}
       <Sidebar />
 
-      {/* ✅ FIXED CONTENT (PERFECT ALIGNMENT) */}
-      <main className="ml-24 w-[calc(100%-6rem)] p-6 bg-gray-100 min-h-screen">
+      {/* ✅ RESPONSIVE CONTENT */}
+      <main className="w-full md:ml-24 md:w-[calc(100%-6rem)] p-4 md:p-6 bg-gray-100 min-h-screen">
         <Outlet />
       </main>
 

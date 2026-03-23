@@ -11,7 +11,6 @@ const Sidebar = () => {
 
   const storedUser = JSON.parse(localStorage.getItem("user"));
 
-  // 🔥 NORMALIZE ROLE (THIS FIXES EVERYTHING)
   const role = storedUser?.role
     ? storedUser.role.toLowerCase().replace(/[\s_-]/g, "")
     : "guest";
@@ -27,11 +26,16 @@ const Sidebar = () => {
     navigate("/");
   };
 
+  // ✅ NEW: auto close sidebar
+  const handleNavigate = () => {
+    setOpen(false);
+  };
+
   return (
     <>
       {/* Mobile Toggle */}
       <button
-        className="fixed top-4 left-4 z-50 md:hidden bg-blue-950 text-white p-2 rounded"
+        className="fixed top-4 left-4 z-50 md:hidden bg-blue-950 text-white p-2.5 rounded-lg shadow"
         onClick={() => setOpen(!open)}
       >
         {open ? <X size={22} /> : <Menu size={22} />}
@@ -40,19 +44,19 @@ const Sidebar = () => {
       {/* Sidebar */}
       <div
         className={`group fixed top-0 left-0 h-screen bg-blue-950 text-white transition-all duration-300 z-40
-        w-24 hover:w-64
+        w-64 md:w-24 md:hover:w-64
         ${open ? "translate-x-0" : "-translate-x-full"}
         md:translate-x-0`}
       >
 
         {/* Logo */}
         <div className="flex flex-col items-center p-4 border-b border-blue-800">
-          <div className="flex flex-col items-center gap-2 group-hover:flex-row group-hover:gap-3 transition-all">
+          <div className="flex flex-col items-center gap-2 md:group-hover:flex-row md:group-hover:gap-3 transition-all">
             <img src="/ched.png" className="w-10 h-10" />
             <img src="/achieve.png" className="w-10 h-10" />
           </div>
 
-          <span className="mt-2 font-bold opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+          <span className="mt-2 font-bold md:opacity-0 md:group-hover:opacity-100 transition whitespace-nowrap text-sm">
             Scholarship Analytics
           </span>
         </div>
@@ -60,15 +64,14 @@ const Sidebar = () => {
         {/* Navigation */}
         <nav className="mt-6">
 
-          {/* Dashboard */}
           <SidebarItem
             to="/dashboard"
             icon={<Home size={22} />}
             text="Dashboard"
             active={location.pathname === "/dashboard"}
+            onClick={handleNavigate}
           />
 
-          {/* ADMIN + SUPERADMIN */}
           {(isAdmin || isSuperAdmin) && (
             <>
               {/* Scholars */}
@@ -87,16 +90,25 @@ const Sidebar = () => {
                     <Users size={22} />
                   </div>
 
-                  <span className="font-bold opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                  <span className="font-bold md:opacity-0 md:group-hover:opacity-100 transition whitespace-nowrap">
                     Scholars
                   </span>
                 </div>
 
-                <div className="hidden group-hover/item:block bg-blue-900">
-                  <SubItem to="/scholars" text="All Scholars" active={location.pathname === "/scholars"} />
-                  <SubItem to="/msrs" text="MSRS" active={location.pathname === "/msrs"} />
-                  <SubItem to="/sikap" text="SIKAP" active={location.pathname === "/sikap"} />
-                  <SubItem to="/husay" text="HUSAY" active={location.pathname === "/husay"} />
+                {/* Mobile */}
+                <div className="bg-blue-900 md:hidden block">
+                  <SubItem to="/scholars" text="All Scholars" active={location.pathname === "/scholars"} onClick={handleNavigate} />
+                  <SubItem to="/msrs" text="MSRS" active={location.pathname === "/msrs"} onClick={handleNavigate} />
+                  <SubItem to="/sikap" text="SIKAP" active={location.pathname === "/sikap"} onClick={handleNavigate} />
+                  <SubItem to="/husay" text="HUSAY" active={location.pathname === "/husay"} onClick={handleNavigate} />
+                </div>
+
+                {/* Desktop */}
+                <div className="hidden md:group-hover/item:block bg-blue-900">
+                  <SubItem to="/scholars" text="All Scholars" active={location.pathname === "/scholars"} onClick={handleNavigate} />
+                  <SubItem to="/msrs" text="MSRS" active={location.pathname === "/msrs"} onClick={handleNavigate} />
+                  <SubItem to="/sikap" text="SIKAP" active={location.pathname === "/sikap"} onClick={handleNavigate} />
+                  <SubItem to="/husay" text="HUSAY" active={location.pathname === "/husay"} onClick={handleNavigate} />
                 </div>
               </div>
 
@@ -106,17 +118,18 @@ const Sidebar = () => {
                 icon={<BarChart3 size={22} />}
                 text="Reports"
                 active={location.pathname === "/reports"}
+                onClick={handleNavigate}
               />
             </>
           )}
 
-          {/* SUPERADMIN ONLY */}
           {isSuperAdmin && (
             <SidebarItem
               to="/users"
               icon={<Users size={22} />}
               text="User Management"
               active={location.pathname === "/users"}
+              onClick={handleNavigate}
             />
           )}
         </nav>
@@ -128,6 +141,7 @@ const Sidebar = () => {
             icon={<Settings size={22} />}
             text="Settings"
             active={location.pathname === "/settings"}
+            onClick={handleNavigate}
           />
 
           <button
@@ -138,7 +152,7 @@ const Sidebar = () => {
               <LogOut size={22} />
             </div>
 
-            <span className="opacity-0 group-hover:opacity-100 transition">
+            <span className="md:opacity-0 md:group-hover:opacity-100 transition">
               Logout
             </span>
           </button>
@@ -177,25 +191,27 @@ const Sidebar = () => {
 };
 
 /* Sidebar Item */
-const SidebarItem = ({ icon, text, to, active }) => (
+const SidebarItem = ({ icon, text, to, active, onClick }) => (
   <Link
     to={to}
+    onClick={onClick}
     className={`flex items-center gap-4 p-4 ${
       active ? "bg-blue-800" : "hover:bg-blue-800"
     }`}
   >
     <div className="w-10 flex justify-center">{icon}</div>
 
-    <span className="font-bold opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+    <span className="font-bold md:opacity-0 md:group-hover:opacity-100 transition whitespace-nowrap">
       {text}
     </span>
   </Link>
 );
 
 /* Sub Item */
-const SubItem = ({ to, text, active }) => (
+const SubItem = ({ to, text, active, onClick }) => (
   <Link
     to={to}
+    onClick={onClick}
     className={`block pl-16 pr-4 py-2 text-sm ${
       active ? "bg-blue-700" : "hover:bg-blue-700"
     }`}

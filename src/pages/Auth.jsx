@@ -41,14 +41,11 @@ const Auth = () => {
         return;
       }
 
-      // ✅ STORE TOKEN
       localStorage.setItem("token", data.token);
 
-      // ✅ STORE USER IF BACKEND RETURNS IT
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
       } else {
-        // 🔥 FALLBACK: FETCH USER IMMEDIATELY
         const userRes = await fetch(`${API_URL}/user`, {
           headers: {
             Authorization: "Bearer " + data.token,
@@ -61,7 +58,6 @@ const Auth = () => {
         localStorage.setItem("user", JSON.stringify(userData));
       }
 
-      // ✅ NAVIGATE AFTER EVERYTHING IS READY
       navigate("/dashboard");
 
     } catch (err) {
@@ -73,9 +69,21 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gray-100">
 
-      {/* LEFT PANEL */}
+      {/* 🔥 MOBILE TOP BANNER (instead of hidden left panel) */}
+      <div className="md:hidden bg-blue-900 text-white text-center px-4 py-6">
+        <div className="flex justify-center items-center gap-3 mb-4">
+          <img src="/Bagong_Pilipinas.png" className="w-12 h-12 object-contain" />
+          <img src="/ched.png" className="w-12 h-12 object-contain" />
+          <img src="/achieve.png" className="w-12 h-12 object-contain" />
+        </div>
+        <h1 className="text-lg font-bold uppercase">
+          Scholarship Analytics System
+        </h1>
+      </div>
+
+      {/* LEFT PANEL (DESKTOP ONLY — unchanged) */}
       <div className="hidden md:flex w-1/2 bg-blue-900 text-white items-center justify-center p-10">
         <div className="max-w-md text-center">
 
@@ -97,13 +105,13 @@ const Auth = () => {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="flex w-full md:w-1/2 items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+      <div className="flex flex-1 items-center justify-center px-4 py-6 md:py-0">
 
-        <div className="bg-white/90 backdrop-blur-xl w-full max-w-md p-8 rounded-3xl shadow-2xl border border-gray-200">
+        <div className="bg-white/90 backdrop-blur-xl w-full max-w-md p-6 md:p-8 rounded-2xl md:rounded-3xl shadow-2xl border border-gray-200">
 
           {/* HEADER */}
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-gray-800">
+          <div className="text-center mb-6 md:mb-8">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-gray-800">
               Welcome Back
             </h2>
             <p className="text-gray-500 text-sm mt-2">
@@ -112,19 +120,20 @@ const Auth = () => {
           </div>
 
           {/* FORM */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4 md:gap-5">
 
             {/* EMAIL */}
             <div className="flex items-center border rounded-xl bg-gray-50 focus-within:ring-2 focus-within:ring-blue-500">
               <input
                 type="text"
+                inputMode="email"
                 placeholder="username"
                 value={email.replace("@ched.gov.ph", "")}
                 onChange={(e) => {
                   const username = e.target.value.replace("@ched.gov.ph", "");
                   setEmail(username + "@ched.gov.ph");
                 }}
-                className="flex-1 px-4 py-3 bg-transparent outline-none"
+                className="flex-1 px-4 py-3 bg-transparent outline-none text-base"
               />
               <span className="px-3 text-gray-500 text-sm">
                 @ched.gov.ph
@@ -138,13 +147,13 @@ const Auth = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 pr-10"
+                className="w-full px-4 py-3 border rounded-xl bg-gray-50 focus:ring-2 focus:ring-blue-500 pr-12 text-base"
               />
               <span
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
+                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </span>
             </div>
 
@@ -152,7 +161,7 @@ const Auth = () => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl transition"
+              className="bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white py-3 rounded-xl transition text-base font-medium"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
