@@ -1,217 +1,283 @@
+import { Mail, ArrowLeft } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import EditScholarModal from "../components/EditScholarModal";
-
-const scholarsData = [
-  {
-    id: 1,
-    lastName: "Dela Cruz",
-    firstName: "Juan",
-    middleInitial: "D",
-    suffix: "",
-    region: "NCR",
-    course: "BS Information Technology",
-    year: "2023-2024",
-    type: "Full Scholarship",
-    status: "Active",
-  },
-  {
-    id: 2,
-    lastName: "Santos",
-    firstName: "Maria",
-    middleInitial: "A",
-    suffix: "",
-    region: "Region IV-A",
-    course: "BS Computer Science",
-    year: "2024-2025",
-    type: "Partial Scholarship",
-    status: "Active",
-  },
-];
+import { useEffect, useState } from "react";
+import supabase from "../utils/supabase";
 
 const ScholarDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isEditOpen, setIsEditOpen] = useState(false);
 
-  const student = scholarsData.find((s) => s.id === Number(id));
+  const [scholar, setScholar] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!student) {
-    return (
-      <div className="p-4">
-        <h2 className="text-lg font-bold mb-4">Scholar not found</h2>
-        <button
-          onClick={() => navigate("/scholars")}
-          className="w-full bg-gray-800 text-white px-4 py-2 rounded-lg"
-        >
-          Back
-        </button>
-      </div>
-    );
-  }
+  ////////////////////////////////////////////////////
+  // FETCH DATA (FROM BOTH TABLES)
+  ////////////////////////////////////////////////////
+  useEffect(() => {
+    const fetchScholar = async () => {
+      setLoading(true);
+
+      // 🔥 Try ongoing first
+      let { data, error } = await supabase
+        .from("msrs_scholars")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+      // 🔥 If not found, try graduates
+      if (!data) {
+        const res = await supabase
+          .from("graduate_msrs")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+
+        data = res.data;
+        error = res.error;
+      }
+
+      if (error) {
+        console.error(error);
+      }
+
+      if (data) {
+        // ✅ NORMALIZE EVERYTHING
+        const normalized = {
+          ...data,
+          first_name: data.first_name || data.fname || "",
+          last_name: data.last_name || data.lname || "",
+          hei: data.hei || data.school || data.university || "",
+          award_year: data.award_year || data.year_awarded || "",
+          status:
+            data.status ||
+            (data.graduated ? "GRADUATED" : "ACTIVE"),
+        };
+
+        setScholar(normalized);
+      }
+
+      setLoading(false);
+    };
+
+    fetchScholar();
+  }, [id]);
+
+  ////////////////////////////////////////////////////
+  // LOADING
+  ////////////////////////////////////////////////////
+  if (loading) return <div className="p-6">Loading...</div>;
+  if (!scholar) return <div className="p-6 text-red-500">Scholar not found</div>;
+
+  ////////////////////////////////////////////////////
+  // BASIC INFO
+  ////////////////////////////////////////////////////
+  const fullName = `${scholar.first_name} ${scholar.last_name}`;
+  const initial = fullName.charAt(0) || "S";
+
+  ////////////////////////////////////////////////////
+  // GROUP SEMESTERS (FIXED + FLEXIBLE)
+  ////////////////////////////////////////////////////
+  const groupedSemesters = {};
+
+  Object.keys(scholar).forEach((key) => {
+    const upper = key.toUpperCase();
+
+    if (upper.includes("STATUS") && upper.includes("SEM")) {
+      const yearMatch = key.match(/\d{4}-\d{4}/);
+      const year = yearMatch ? yearMatch[0] : "Unknown";
+
+      const semester = upper.includes("1SEM")
+        ? "1st Semester"
+        : "2nd Semester";
+
+      const releaseKey = key.replace(/STATUS/i, "OSDS RELEASE");
+      const remarksKey = key.replace(/STATUS/i, "OSDS REMARKS");
+
+      const entry = {
+        semester,
+        status: scholar[key],
+        release: scholar[releaseKey],
+        remarks: scholar[remarksKey],
+      };
+
+      if (!groupedSemesters[year]) {
+        groupedSemesters[year] = [];
+      }
+
+      groupedSemesters[year].push(entry);
+    }
+  });
+
+  ////////////////////////////////////////////////////
+  // STATUS STYLE
+  ////////////////////////////////////////////////////
+  const getStatusStyle = (status) => {
+    if (!status) return "bg-gray-100 text-gray-500";
+
+    const s = status.toUpperCase();
+
+    if (s.includes("ACTIVE")) return "bg-green-100 text-green-700";
+    if (s.includes("FUNDED")) return "bg-blue-100 text-blue-700";
+    if (s.includes("INACTIVE")) return "bg-red-100 text-red-700";
+    if (s.includes("GRADUATED")) return "bg-purple-100 text-purple-700";
+
+    return "bg-gray-100 text-gray-600";
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="bg-gray-100 min-h-screen p-4 md:p-6">
 
-      {/* HEADER */}
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold">
-          Scholar Details
-        </h2>
-      </div>
-
-      {/* RETURN BUTTON */}
+      {/* BACK */}
       <button
-        onClick={() => navigate("/scholars")}
-        className="w-full sm:w-auto bg-gray-800 text-white px-5 py-2 rounded-lg hover:bg-gray-700"
+        onClick={() => navigate(-1)}
+        className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-900"
       >
-        ← Return to Scholars List
+        <ArrowLeft size={18} />
+        Return to MSRS
       </button>
 
-      {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="space-y-6">
 
-        <Stat title="Allowance Received" value="₱45,000" color="text-blue-600" />
-        <Stat title="Semesters Completed" value="6" color="text-green-600" />
-        <Stat title="Remaining Semesters" value="2" color="text-yellow-500" />
+        {/* HEADER */}
+        <div className="bg-blue-900 text-white rounded-3xl p-8 shadow-lg">
 
-      </div>
+          <div className="flex flex-col md:flex-row md:justify-between gap-6">
 
-      {/* PROFILE CARD */}
-      <div className="bg-white rounded-xl shadow p-4 sm:p-6 relative">
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-full bg-white text-blue-600 flex items-center justify-center text-2xl font-bold">
+                {initial}
+              </div>
 
-        {/* EDIT BUTTON */}
-        <div className="sm:absolute sm:top-6 sm:right-6 mb-4 sm:mb-0">
-          <button
-            onClick={() => setIsEditOpen(true)}
-            className="w-full sm:w-auto bg-blue-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-800"
-          >
-            Edit Scholar
-          </button>
-        </div>
-
-        {/* NAME */}
-        <h3 className="text-lg sm:text-xl font-semibold mb-4 sm:mb-6 break-words">
-          {student.lastName}, {student.firstName} {student.middleInitial}.
-          {student.suffix && ` ${student.suffix}`}
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* IMAGE */}
-          <div>
-            <img
-              src={`https://i.pravatar.cc/300?img=${student.id}`}
-              className="w-full h-52 sm:h-64 object-cover rounded-lg"
-            />
-          </div>
-
-          {/* DETAILS */}
-          <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-
-            <Info label="Last Name" value={student.lastName} />
-            <Info label="First Name" value={student.firstName} />
-            <Info label="Middle Initial" value={student.middleInitial} />
-            <Info label="Suffix" value={student.suffix || "N/A"} />
-            <Info label="Course" value={student.course} />
-            <Info label="Region" value={student.region} />
-            <Info label="Academic Year" value={student.year} />
-            <Info label="Scholar Type" value={student.type} />
-
-            <div>
-              <p className="text-gray-500 text-sm">Status</p>
-              <span
-                className={`inline-block mt-1 px-3 py-1 text-xs rounded-full font-medium ${
-                  student.status === "Active"
-                    ? "bg-green-100 text-green-600"
-                    : "bg-yellow-100 text-yellow-600"
-                }`}
-              >
-                {student.status}
-              </span>
+              <div>
+                <h1 className="text-2xl font-bold">{fullName}</h1>
+                <p className="text-sm opacity-80">{scholar.hei}</p>
+              </div>
             </div>
 
+            {/* ✅ DYNAMIC STATUS */}
+            <span className={`px-4 py-1.5 rounded-full text-sm font-semibold ${getStatusStyle(scholar.status)}`}>
+              {scholar.status}
+            </span>
+
           </div>
         </div>
-      </div>
 
-      {/* TIMELINE */}
-      <div className="bg-white rounded-xl shadow p-4 sm:p-6 overflow-x-auto">
+        {/* CONTENT */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <h3 className="text-lg sm:text-xl font-semibold mb-6 sm:mb-8">
-          Scholarship Progress Tracking
-        </h3>
+          {/* PROFILE */}
+          <div className="bg-white rounded-2xl p-6 shadow space-y-4">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              Profile Information
+            </h3>
 
-        <div className="min-w-[500px] relative">
+            <Info label="HEI" value={scholar.hei} icon={<Mail size={14} />} />
+            <Info label="Region" value={scholar.region} />
+            <Info label="Award Year" value={scholar.award_year} />
+            <Info label="Gender" value={scholar.gender} />
+          </div>
 
-          <div className="absolute top-5 left-0 w-full h-1 bg-gray-300"></div>
+          {/* ACADEMIC */}
+          <div className="lg:col-span-2 bg-white rounded-2xl p-6 shadow space-y-6">
 
-          <div className="flex justify-between relative">
+            <h3 className="text-sm font-semibold text-gray-500 uppercase">
+              Academic Status
+            </h3>
 
-            {[
-              { label: "1st Year", status: "Completed" },
-              { label: "2nd Year", status: "Completed" },
-              { label: "3rd Year", status: "Ongoing" },
-              { label: "4th Year", status: "Pending" },
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col items-center w-1/4 text-center">
+            {Object.keys(groupedSemesters).length === 0 && (
+              <p className="text-gray-400 text-sm">No academic data</p>
+            )}
 
-                <div
-                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-4 border-white ${
-                    i < 3 ? "bg-blue-900" : "bg-gray-300"
-                  }`}
-                />
+            {Object.entries(groupedSemesters).map(([year, semesters]) => (
+              <div key={year}>
 
-                <h4 className="font-semibold mt-3 text-xs sm:text-sm">
-                  {item.label}
-                </h4>
+                <h4 className="font-semibold text-gray-800 mb-2">{year}</h4>
 
-                <span className={`text-[10px] sm:text-xs px-2 py-1 rounded mt-1
-                  ${
-                    item.status === "Completed"
-                      ? "bg-green-100 text-green-600"
-                      : item.status === "Ongoing"
-                      ? "bg-yellow-100 text-yellow-600"
-                      : "bg-gray-200 text-gray-500"
-                  }
-                `}>
-                  {item.status}
-                </span>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {semesters.map((sem, i) => (
+                    <div key={i} className="border rounded-xl p-4 bg-gray-50">
+
+                      <p className="text-xs text-gray-400 mb-2">
+                        {sem.semester}
+                      </p>
+
+                      <Mini label="Status" value={sem.status} />
+                      <Mini label="OSDS Release" value={sem.release} />
+                      <Mini label="Remarks" value={sem.remarks} />
+
+                    </div>
+                  ))}
+                </div>
 
               </div>
             ))}
 
           </div>
+
         </div>
       </div>
-
-      {/* MODAL */}
-      {isEditOpen && (
-        <EditScholarModal
-          student={student}
-          onClose={() => setIsEditOpen(false)}
-        />
-      )}
-
     </div>
   );
 };
 
-/* COMPONENTS */
-const Info = ({ label, value }) => (
-  <div>
-    <p className="text-gray-500 text-xs sm:text-sm">{label}</p>
-    <p className="font-medium text-sm sm:text-base break-words">{value}</p>
-  </div>
-);
-
-const Stat = ({ title, value, color }) => (
-  <div className="bg-white p-4 sm:p-5 rounded-xl shadow">
-    <p className="text-gray-500 text-xs sm:text-sm">{title}</p>
-    <h3 className={`text-xl sm:text-2xl font-bold mt-2 ${color}`}>
-      {value}
-    </h3>
-  </div>
-);
-
 export default ScholarDetails;
+
+////////////////////////////////////////////////////
+// INFO
+////////////////////////////////////////////////////
+const Info = ({ label, value, icon }) => (
+  <div className="flex items-center gap-2">
+    {icon && <span className="text-gray-400">{icon}</span>}
+    <div>
+      <p className="text-gray-400 text-xs">{label}</p>
+      <p className="font-medium text-gray-800">{value || "-"}</p>
+    </div>
+  </div>
+);
+
+////////////////////////////////////////////////////
+// MINI
+////////////////////////////////////////////////////
+const Mini = ({ label, value }) => {
+  const isStatus = label.toLowerCase() === "status";
+  const isMoney = label.toLowerCase().includes("release");
+
+  const getStatusStyle = (status) => {
+    if (!status) return "bg-gray-100 text-gray-500";
+
+    const s = status.toUpperCase();
+
+    if (s.includes("ACTIVE")) return "bg-green-100 text-green-700";
+    if (s.includes("FUNDED")) return "bg-blue-100 text-blue-700";
+    if (s.includes("INACTIVE")) return "bg-red-100 text-red-700";
+    if (s.includes("GRADUATED")) return "bg-purple-100 text-purple-700";
+
+    return "bg-gray-100 text-gray-600";
+  };
+
+  const formatMoney = (val) => {
+    if (!val) return "-";
+    const num = parseFloat(val.toString().replace(/,/g, ""));
+    if (isNaN(num)) return val;
+
+    return `₱${num.toLocaleString("en-PH", {
+      minimumFractionDigits: 2,
+    })}`;
+  };
+
+  return (
+    <div className="mb-2">
+      <p className="text-gray-400 text-xs">{label}</p>
+
+      {isStatus ? (
+        <span className={`px-2 py-1 text-xs rounded-full ${getStatusStyle(value)}`}>
+          {value || "-"}
+        </span>
+      ) : (
+        <p className="font-medium text-gray-800">
+          {isMoney ? formatMoney(value) : value || "-"}
+        </p>
+      )}
+    </div>
+  );
+};

@@ -39,8 +39,6 @@ function App() {
         if (!res.ok) throw new Error("Unauthorized");
 
         const data = await res.json();
-
-        // ✅ Save fresh user to localStorage
         localStorage.setItem("user", JSON.stringify(data));
 
       } catch (err) {
@@ -63,7 +61,7 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* ROOT REDIRECT */}
+        {/* ROOT */}
         <Route
           path="/"
           element={
@@ -74,7 +72,7 @@ function App() {
           }
         />
 
-        {/* PUBLIC ROUTE */}
+        {/* LOGIN */}
         <Route
           path="/login"
           element={
@@ -84,7 +82,7 @@ function App() {
           }
         />
 
-        {/* ✅ MAIN LAYOUT (SIDEBAR ALWAYS HERE) */}
+        {/* MAIN LAYOUT */}
         <Route element={<MainLayout />}>
 
           <Route
@@ -114,20 +112,31 @@ function App() {
             }
           />
 
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
-                <Reports />
-              </ProtectedRoute>
-            }
-          />
-
+          {/* 🔥 MSRS */}
           <Route
             path="/msrs"
             element={
               <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
                 <MSRS />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 🔥 MSRS DETAILS */}
+          <Route
+            path="/msrs/:id"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <ScholarDetails />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "superadmin"]}>
+                <Reports />
               </ProtectedRoute>
             }
           />

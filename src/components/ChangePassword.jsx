@@ -1,6 +1,12 @@
 import { useState } from "react";
 import API_URL from "../utils/api";
-import { Eye, EyeOff } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  CheckCircle,
+  Loader2,
+  Lock,
+} from "lucide-react";
 
 const ChangePassword = ({ isOpen, onClose }) => {
   const [form, setForm] = useState({
@@ -10,6 +16,7 @@ const ChangePassword = ({ isOpen, onClose }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const [show, setShow] = useState({
     current: false,
@@ -64,7 +71,6 @@ const ChangePassword = ({ isOpen, onClose }) => {
         }),
       });
 
-      // ✅ SAFE JSON PARSE (prevents crash)
       let data;
       try {
         data = await res.json();
@@ -77,23 +83,12 @@ const ChangePassword = ({ isOpen, onClose }) => {
         return;
       }
 
-      alert("Password changed successfully!");
+      setSuccess(true);
 
-      // ✅ Reset form
-      setForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-
-      // ✅ Close modal AFTER success
-      onClose();
-
-      // 🔥 OPTIONAL (recommended security)
-      // Uncomment if you want forced logout after password change
-      // localStorage.removeItem("token");
-      // window.location.href = "/login";
-
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 1800);
     } catch (err) {
       console.error(err);
       alert("Server error. Please try again.");
@@ -102,77 +97,95 @@ const ChangePassword = ({ isOpen, onClose }) => {
     }
   };
 
+  const fieldMap = {
+    currentPassword: "current",
+    newPassword: "new",
+    confirmPassword: "confirm",
+  };
+
+  const labels = {
+    currentPassword: "Current Password",
+    newPassword: "New Password",
+    confirmPassword: "Confirm Password",
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
 
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">
-          Change Password
-        </h2>
+      {/* MODAL */}
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-fadeIn relative">
 
-        <div className="space-y-4">
-
-          {/* CURRENT PASSWORD */}
-          <div className="relative">
-            <input
-              type={show.current ? "text" : "password"}
-              name="currentPassword"
-              placeholder="Current Password"
-              value={form.currentPassword}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="button"
-              onClick={() => toggleShow("current")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-            >
-              {show.current ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+        {/* SUCCESS */}
+        {success && (
+          <div className="absolute inset-0 bg-white/95 flex flex-col items-center justify-center z-20">
+            <CheckCircle className="text-green-500 mb-2" size={42} />
+            <p className="text-sm font-medium text-gray-700">
+              Password Updated Successfully
+            </p>
           </div>
+        )}
 
-          {/* NEW PASSWORD */}
-          <div className="relative">
-            <input
-              type={show.new ? "text" : "password"}
-              name="newPassword"
-              placeholder="New Password"
-              value={form.newPassword}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="button"
-              onClick={() => toggleShow("new")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-            >
-              {show.new ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+        {/* LOADING */}
+        {loading && !success && (
+          <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-20">
+            <Loader2 className="animate-spin text-blue-600" size={30} />
           </div>
+        )}
 
-          {/* CONFIRM PASSWORD */}
-          <div className="relative">
-            <input
-              type={show.confirm ? "text" : "password"}
-              name="confirmPassword"
-              placeholder="Confirm New Password"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="button"
-              onClick={() => toggleShow("confirm")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-            >
-              {show.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+        {/* HEADER */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-500 px-6 py-5 text-white">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <Lock size={18} />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">
+                Change Password
+              </h2>
+              <p className="text-xs text-blue-100">
+                Keep your account secure
+              </p>
+            </div>
           </div>
+        </div>
+
+        {/* BODY */}
+        <div className="px-6 py-6 space-y-4">
+
+          {Object.keys(form).map((field) => (
+            <div key={field} className="space-y-1">
+              <label className="text-xs text-gray-500">
+                {labels[field]}
+              </label>
+
+              <div className="relative">
+                <input
+                  type={show[fieldMap[field]] ? "text" : "password"}
+                  name={field}
+                  value={form[field]}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => toggleShow(fieldMap[field])}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {show[fieldMap[field]] ? (
+                    <EyeOff size={18} />
+                  ) : (
+                    <Eye size={18} />
+                  )}
+                </button>
+              </div>
+            </div>
+          ))}
 
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
-
+        {/* FOOTER */}
+        <div className="px-6 pb-6 flex justify-end gap-2">
           <button
             onClick={onClose}
             disabled={loading}
@@ -184,12 +197,12 @@ const ChangePassword = ({ isOpen, onClose }) => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-blue-700 transition disabled:opacity-50"
+            className="bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-medium hover:bg-blue-700 transition"
           >
-            {loading ? "Updating..." : "Update"}
+            Update Password
           </button>
-
         </div>
+
       </div>
     </div>
   );

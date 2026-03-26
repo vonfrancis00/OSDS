@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import supabase from "../utils/supabase";
+
 import StatCard from "../components/StatCard";
 import { Users, FileText, CheckCircle, Clock } from "lucide-react";
 
@@ -41,6 +44,46 @@ const pieData = [
 const COLORS = ["#22c55e", "#facc15", "#ef4444"];
 
 const Dashboard = () => {
+  const [msrsCount, setMsrsCount] = useState(0);
+
+  ////////////////////////////////////////////////////
+  // FETCH MSRS COUNT
+  ////////////////////////////////////////////////////
+  const fetchMsrsCount = async () => {
+  try {
+    // fetch both counts in parallel
+    const [
+      { count: msrsCountData, error: err1 },
+      { count: graduateCountData, error: err2 },
+    ] = await Promise.all([
+      supabase
+        .from("msrs_scholars")
+        .select("*", { count: "exact", head: true }),
+
+      supabase
+        .from("graduate_msrs")
+        .select("*", { count: "exact", head: true }),
+    ]);
+
+    if (err1 || err2) {
+      console.error("Error fetching MSRS counts:", err1 || err2);
+      return;
+    }
+
+    const total =
+      (msrsCountData || 0) + (graduateCountData || 0);
+
+    setMsrsCount(total);
+
+  } catch (error) {
+    console.error("Unexpected error:", error);
+  }
+};
+
+  useEffect(() => {
+    fetchMsrsCount();
+  }, []);
+
   return (
     <div className="px-4 sm:px-6">
 
@@ -62,7 +105,7 @@ const Dashboard = () => {
 
         <StatCard
           title="Total MSRS Scholars"
-          value="320"
+          value={msrsCount.toLocaleString()}
           icon={<FileText size={20} />}
           color="bg-purple-500"
           to="/msrs"
@@ -139,7 +182,7 @@ const Dashboard = () => {
                 dataKey="value"
                 cx="50%"
                 cy="50%"
-                outerRadius={70} // slightly smaller for mobile
+                outerRadius={70}
                 label
               >
                 {pieData.map((entry, index) => (

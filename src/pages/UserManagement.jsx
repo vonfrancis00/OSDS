@@ -8,12 +8,17 @@ import {
   ToggleRight,
 } from "lucide-react";
 import AddUserModal from "../components/AddUserModal";
+import UserDetailModal from "../components/UserDetailModal"; // ✅ ADD THIS
 import API_URL from "../utils/api";
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // ✅ NEW STATE
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
@@ -247,7 +252,19 @@ const UserManagement = () => {
                   </div>
 
                   {/* ACTIONS */}
-                  <div className="flex justify-end sm:justify-center">
+                  <div className="flex justify-end sm:justify-center gap-2">
+                    {/* ✅ VIEW BUTTON */}
+                    <button
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setIsDetailModalOpen(true);
+                      }}
+                      className="px-3 py-1 text-xs rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    >
+                      View
+                    </button>
+
+                    {/* DELETE */}
                     <button
                       onClick={() => deleteUser(u._id)}
                       className="p-2 rounded-lg hover:bg-red-50 text-red-500 hover:text-red-600 transition"
@@ -269,13 +286,20 @@ const UserManagement = () => {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* ADD USER MODAL */}
       <AddUserModal
         isOpen={isAddUserModalOpen}
         onClose={() => setIsAddUserModalOpen(false)}
         onUserAdded={() => {
           fetchUsers();
         }}
+      />
+
+      {/* ✅ USER DETAIL MODAL */}
+      <UserDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        user={selectedUser}
       />
     </div>
   );

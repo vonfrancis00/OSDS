@@ -1,106 +1,151 @@
+import { useEffect, useState } from "react";
 import { Users, GraduationCap, Activity } from "lucide-react";
+import supabase from "../utils/supabase";
+import { useNavigate } from "react-router-dom";
 
 const MSRS = () => {
+  const [scholars, setScholars] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const [ongoingCount, setOngoingCount] = useState(0);
+  const [graduateCount, setGraduateCount] = useState(0);
+
+  const navigate = useNavigate();
+
+  ////////////////////////////////////////////////////
+  // FETCH DATA
+  ////////////////////////////////////////////////////
+  const fetchData = async () => {
+    setLoading(true);
+
+    try {
+      const { data: ongoingData } = await supabase
+        .from("msrs_scholars")
+        .select("*");
+
+      const { data: graduateData } = await supabase
+        .from("graduate_msrs")
+        .select("*");
+
+      const ongoingWithStatus = (ongoingData || []).map((s, i) => ({
+        ...s,
+        id: s.id || `ongoing-${i}`,
+        first_name: s.first_name || s.fname || "",
+        last_name: s.last_name || s.lname || "",
+        hei: s.hei || s.school || s.university || "",
+        award_year: s.award_year || s.year_awarded || "",
+        status: "ongoing",
+      }));
+
+      const graduatesWithStatus = (graduateData || []).map((s, i) => ({
+        ...s,
+        id: s.id || `graduate-${i}`,
+        first_name: s.first_name || s.fname || "",
+        last_name: s.last_name || s.lname || "",
+        hei: s.hei || s.school || s.university || "",
+        award_year: s.award_year || s.year_awarded || "",
+        status: "graduate",
+      }));
+
+      const combined = [...ongoingWithStatus, ...graduatesWithStatus];
+
+      setScholars(combined);
+      setOngoingCount(ongoingWithStatus.length);
+      setGraduateCount(graduatesWithStatus.length);
+
+    } catch (err) {
+      console.error(err);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const total = ongoingCount + graduateCount;
+
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-6 bg-gray-50 min-h-screen">
 
       {/* HEADER */}
-      <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-          MSRS Program
-        </h1>
-        <p className="text-gray-500 text-xs sm:text-sm">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">MSRS Program</h1>
+        <p className="text-gray-500 text-sm mt-1">
           Medical Scholarship and Return Service Program Overview
         </p>
-
-        <div className="mt-3 h-1 w-24 sm:w-32 bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full"></div>
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6">
-
-        <StatCard
-          title="Total Scholars"
-          value="120"
-          icon={<Users size={20} />}
-          color="blue"
-        />
-
-        <StatCard
-          title="Active"
-          value="95"
-          icon={<Activity size={20} />}
-          color="green"
-        />
-
-        <StatCard
-          title="Graduated"
-          value="25"
-          icon={<GraduationCap size={20} />}
-          color="indigo"
-        />
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8">
+        <StatCard title="Total Scholars" value={total} icon={<Users size={20} />} color="blue" />
+        <StatCard title="Ongoing Scholars" value={ongoingCount} icon={<Activity size={20} />} color="green" />
+        <StatCard title="Graduated Scholars" value={graduateCount} icon={<GraduationCap size={20} />} color="indigo" />
       </div>
 
       {/* TABLE */}
-      <div className="bg-white/80 backdrop-blur border border-gray-200 rounded-2xl shadow-sm">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
-        {/* HEADER */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 p-4 sm:p-5 border-b">
-          <h2 className="font-semibold text-gray-800 text-sm sm:text-base">
-            MSRS Scholars List
-          </h2>
+        <div className="flex justify-between items-center px-6 py-4">
+          <h2 className="font-semibold text-gray-800">MSRS Scholars</h2>
 
-          <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm shadow hover:scale-105 transition w-full sm:w-auto">
+          <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm shadow hover:scale-105 transition">
             + Add Scholar
           </button>
         </div>
 
-        {/* TABLE */}
         <div className="overflow-x-auto">
-          <table className="w-full text-xs sm:text-sm min-w-[600px]">
+          <table className="w-full text-sm">
 
-            <thead className="text-gray-500 uppercase">
+            <thead className="bg-gray-50 text-gray-500 uppercase">
               <tr>
-                <th className="text-left px-4 sm:px-6 py-3">Scholar</th>
-                <th className="text-left px-4 sm:px-6 py-3">Course</th>
-                <th className="text-left px-4 sm:px-6 py-3">Year</th>
-                <th className="text-left px-4 sm:px-6 py-3">Status</th>
-                <th className="text-right px-4 sm:px-6 py-3">Action</th>
+                <th className="text-left px-6 py-3">Scholar</th>
+                <th className="text-left px-6 py-3">HEI</th>
+                <th className="text-left px-6 py-3">Year</th>
+                <th className="text-left px-6 py-3">Status</th>
+                <th className="text-right px-6 py-3">Action</th>
               </tr>
             </thead>
 
-            <tbody className="text-gray-700">
+            <tbody>
 
-              <TableRow
-                name="Juan Dela Cruz"
-                course="Medicine"
-                year="3rd Year"
-                status="Active"
-              />
-
-              <TableRow
-                name="Ana Reyes"
-                course="Medicine"
-                year="4th Year"
-                status="Graduated"
-              />
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-10 text-gray-400">
+                    Loading...
+                  </td>
+                </tr>
+              ) : scholars.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="text-center py-10 text-gray-400">
+                    No data found
+                  </td>
+                </tr>
+              ) : (
+                scholars.map((s) => (
+                  <TableRow
+                    key={s.id}
+                    scholar={s}
+                    onView={(data) => navigate(`/msrs/${data.id}`)}
+                  />
+                ))
+              )}
 
             </tbody>
 
           </table>
         </div>
-
       </div>
+
     </div>
   );
 };
 
 export default MSRS;
 
-
 ////////////////////////////////////////////////////
-// 🔹 STAT CARD
+// STAT CARD
 ////////////////////////////////////////////////////
 const StatCard = ({ title, value, icon, color }) => {
   const colors = {
@@ -110,58 +155,64 @@ const StatCard = ({ title, value, icon, color }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md transition border border-gray-200 flex items-center justify-between">
-
+    <div className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center">
       <div>
-        <p className="text-gray-500 text-xs sm:text-sm">{title}</p>
-        <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mt-2">
-          {value}
-        </h2>
+        <p className="text-gray-500 text-sm">{title}</p>
+        <h2 className="text-3xl font-bold mt-1">{value}</h2>
       </div>
-
-      <div className={`p-2 sm:p-3 rounded-xl ${colors[color]}`}>
+      <div className={`p-3 rounded-xl ${colors[color]}`}>
         {icon}
       </div>
-
     </div>
   );
 };
 
-
 ////////////////////////////////////////////////////
-// 🔹 TABLE ROW
+// TABLE ROW
 ////////////////////////////////////////////////////
-const TableRow = ({ name, course, year, status }) => {
-  const statusStyle =
-    status === "Active"
-      ? "bg-green-100 text-green-700"
-      : "bg-blue-100 text-blue-700";
+const TableRow = ({ scholar, onView }) => {
+  const name = `${scholar.first_name} ${scholar.last_name}`;
+  const isGraduate = scholar.status === "graduate";
 
   return (
-    <tr className="border-t hover:bg-gray-50 transition">
+    <tr className="hover:bg-gray-50 transition">
 
-      <td className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-2 sm:gap-3">
-        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-          {name.charAt(0)}
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-semibold text-sm shadow">
+            {name?.charAt(0) || "?"}
+          </div>
+          <div>
+            <p className="font-medium text-gray-800">{name}</p>
+            <p className="text-xs text-gray-400">{scholar.region || ""}</p>
+          </div>
         </div>
-        <span className="font-medium text-sm">{name}</span>
       </td>
 
-      <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm">{course}</td>
-      <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm">{year}</td>
+      <td className="px-6 py-4 text-gray-600">
+        {scholar.hei}
+      </td>
 
-      <td className="px-4 sm:px-6 py-3 sm:py-4">
-        <span className={`px-2 sm:px-3 py-1 text-xs rounded-full font-semibold ${statusStyle}`}>
-          {status}
+      <td className="px-6 py-4 text-gray-600">
+        {scholar.award_year}
+      </td>
+
+      <td className="px-6 py-4">
+        <span className={`px-3 py-1 text-xs rounded-full font-semibold ${
+          isGraduate
+            ? "bg-indigo-100 text-indigo-700"
+            : "bg-green-100 text-green-700"
+        }`}>
+          {isGraduate ? "Graduated" : "Active"}
         </span>
       </td>
 
-      <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
-        <button className="text-blue-600 hover:underline text-xs sm:text-sm mr-2 sm:mr-3">
-          Edit
-        </button>
-        <button className="text-red-500 hover:underline text-xs sm:text-sm">
-          Delete
+      <td className="px-6 py-4 text-right">
+        <button
+          onClick={() => onView(scholar)}
+          className="text-blue-600 font-medium hover:underline"
+        >
+          View
         </button>
       </td>
 
